@@ -121,6 +121,7 @@ td.r,th.r{text-align:right}
 .item.drag{position:relative;z-index:15}
 .item.drag .stop{border-color:var(--accent2);box-shadow:0 12px 30px rgba(20,33,61,.25);background:#f7faff}
 body.is-dragging{user-select:none;-webkit-user-select:none}
+.fbapp .claudeonly{display:none!important}
 .viewer nav button[data-tab=setup],.viewer .ownonly,.notowner nav button[data-tab=setup]{display:none!important}
 </style>
 </head>
@@ -145,7 +146,7 @@ body.is-dragging{user-select:none;-webkit-user-select:none}
 <div id="toast" class="toast"></div>
 <div id="modalRoot"></div>
 
-<script>window.__VIEWER__=true;</script>
+<script>window.__FB__={"apiKey":"AIzaSyC37Jy8uDjXMg0ukLkn9iGS3pzFzaYcfQo","authDomain":"sapporo-trip-7c748.firebaseapp.com","projectId":"sapporo-trip-7c748","storageBucket":"sapporo-trip-7c748.firebasestorage.app","messagingSenderId":"277571167250","appId":"1:277571167250:web:680951c6ffdf74bab824cb"};</script>
 <script>
 /* =========================================================
    1. 기본 데이터: 장소·역·노선
@@ -504,6 +505,7 @@ async function saveSettings(patch){
   } else pendingSettings=null;
 }
 function handleWriteError(e){
+  if(e&&e.code==='permission-denied'){ toast('편집 권한이 없어요. 관리자 승인을 기다려 주세요.'); return; }
   if(e&&e.code==='invalid_argument'){ state.readOnly=true; document.body.classList.add('ro'); toast('편집 권한이 없어요. 공유한 사람에게 편집 권한을 요청하세요.'); setSync('off','보기 전용'); }
   else if(e&&e.code==='quota_exceeded'){ toast('저장 공간이 가득 찼어요. 오래된 항목을 지워 주세요.'); }
   else { toast('저장에 실패했어요. 잠시 후 다시 시도해 주세요.'); }
@@ -538,7 +540,7 @@ async function viewerHTML(){
   if(!t) throw new Error('원본을 못 읽음 '+why.join(' | '));
   t=t.replace('<title>삿포로 여행 플래너</title>','<title>삿포로 여행</title>\n'+VIEWER_HEAD);
   const i=t.indexOf('<script>\n/* ===='); if(i<0) throw new Error('no script');
-  return t.slice(0,i)+'<script>window.__VIEWER__=true;</'+'script>\n'+t.slice(i);
+  return t.slice(0,i)+'<script>window.__FB__='+JSON.stringify(FB_CONF)+';</'+'script>\n'+t.slice(i);
 }
 async function publishSnapshot(){
   const btn=document.querySelector('[data-publish-public]'); if(btn){btn.disabled=true;btn.textContent='올리는 중…'}
@@ -568,7 +570,139 @@ async function publishSnapshot(){
   }
   if(btn){btn.disabled=false;btn.textContent='🌐 공개 링크 업데이트'}
 }
+
+function subscribeAll(once){
+  once=once||(()=>{});
+  DB.doc('admin/fx').onSnapshot(s=>{ state.fx=s.exists?{...s.data()}:{}; render(); },()=>{});
+  DB.doc('trip/settings').onSnapshot(s=>{
+    state.settings = {...(s.exists? s.data() : {}), ...(pendingSettings||{})};
+    if(!s.metadata.fromCache) once('settings');
+    render();
+  },e=>{ once('settings'); });
+  for(const c of COLLS){
+    DB.collection(c).onSnapshot(q=>{
+      state[c]=q.docs.map(d=>({...d.data(),id:d.id}));
+      if(!q.metadata.fromCache) once(c);
+      render();
+    },e=>{ once(c); if(e&&e.code==='revoked') setSync('off','연결 끊김'); });
+  }
+}
+
+/* ---------- 공개 앱 모드 (GitHub + Firebase 로그인·승인) ---------- */
+const FB=window.__FB__||null;
+const FB_CONF={apiKey:"AIzaSyC37Jy8uDjXMg0ukLkn9iGS3pzFzaYcfQo",authDomain:"sapporo-trip-7c748.firebaseapp.com",projectId:"sapporo-trip-7c748",storageBucket:"sapporo-trip-7c748.firebasestorage.app",messagingSenderId:"277571167250",appId:"1:277571167250:web:680951c6ffdf74bab824cb"};
+const FB_SDK='https://www.gstatic.com/firebasejs/10.12.2/';
+let fb=null;
+const fbState={user:null,ownerUid:null,ownerLoaded:false,member:null,memberLoaded:false,creating:false,members:[],membersUnsub:null};
+function loadScript(src){return new Promise((res,rej)=>{const el=document.createElement('script');el.src=src;el.onload=res;el.onerror=()=>rej(new Error('load '+src));document.head.appendChild(el)})}
+function fbWrap(fs){
+  const base='trips/sapporo';
+  const mapDoc=p=>p==='trip/settings'?base:(p==='admin/fx'?base+'/fx/main':base+'/'+p);
+  return {doc:p=>fs.doc(mapDoc(p)),collection:c=>fs.collection(base+'/'+c)};
+}
+function fbApproved(){return !!(fbState.member&&fbState.member.status==='approved')}
+function ensureMember(){
+  const u=fbState.user;
+  if(!u||!fbState.ownerLoaded||!fbState.ownerUid||fbState.ownerUid===u.uid||!fbState.memberLoaded||fbState.member||fbState.creating) return;
+  fbState.creating=true;
+  fb.fs.doc('members/'+u.uid).set({name:u.displayName||'',email:u.email||'',status:'pending',requestedAt:Date.now()}).catch(()=>{}).finally(()=>{fbState.creating=false});
+}
+function applyRole(){
+  const u=fbState.user; ensureMember();
+  state.isOwner=!!(u&&fbState.ownerUid&&u.uid===fbState.ownerUid); ownerChecked=true;
+  state.readOnly=!(state.isOwner||fbApproved());
+  document.body.classList.toggle('ro',state.readOnly); document.body.classList.toggle('notowner',!state.isOwner);
+  if(!u) setSync('on','보기 전용 · 로그인하면 편집 요청');
+  else if(state.isOwner) setSync('on','👑 관리자 · '+(u.displayName||u.email||''));
+  else if(fbApproved()) setSync('on','✏️ 편집 가능 · '+(u.displayName||''));
+  else setSync('wait','⏳ 승인 대기 중 · '+(u.displayName||''));
+  if(state.isOwner&&!fbState.membersUnsub){
+    fbState.membersUnsub=fb.fs.collection('members').onSnapshot(q=>{fbState.members=q.docs.map(d=>({...d.data(),uid:d.id}));render()},()=>{});
+  } else if(!state.isOwner&&fbState.membersUnsub){ fbState.membersUnsub(); fbState.membersUnsub=null; fbState.members=[]; }
+  renderAuth(); render();
+}
+function renderAuth(){
+  let b=document.getElementById('authBtn');
+  if(!b){b=document.createElement('button');b.id='authBtn';b.className='sync';b.style.cssText='border:0;color:#fff;cursor:pointer;font-weight:700';document.querySelector('header .meta').appendChild(b)}
+  b.innerHTML=fbState.user?'<span>로그아웃</span>':'<span>🔑 구글로 로그인</span>'; b.dataset.auth=fbState.user?'out':'in';
+}
+function inAppBrowser(){return /KAKAOTALK|Instagram|FBAN|FBAV|Line\/|NAVER\(inapp|DaumApps|everytimeApp/i.test(navigator.userAgent)}
+async function fbLogin(){
+  if(inAppBrowser()){
+    $('#modalRoot').innerHTML=`<div class="modal" data-modal-bg><div class="sheet"><h2 style="margin-top:0">다른 브라우저로 열어 주세요</h2>
+      <p>카카오톡·인스타그램 같은 앱 안의 브라우저에서는 구글 로그인이 막혀 있어요.</p>
+      <ul class="muted" style="padding-left:18px"><li>카카오톡: 오른쪽 아래(또는 위) <b>⋮</b> → <b>다른 브라우저로 열기</b></li><li>아이폰: Safari로 열기 / 안드로이드: Chrome으로 열기</li></ul>
+      <div class="row"><input type="text" readonly value="${location.href.split('#')[0]}" class="grow" onclick="this.select()"><button class="btn sec" data-modal-close>닫기</button></div></div></div>`;
+    return;
+  }
+  const p=new firebase.auth.GoogleAuthProvider();
+  try{ await fb.auth.signInWithPopup(p); }
+  catch(e){
+    if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')){ try{ await fb.auth.signInWithRedirect(p); }catch(e2){ toast('로그인 실패: '+(e2.code||e2.message)); } }
+    else if(!e||(e.code!=='auth/popup-closed-by-user'&&e.code!=='auth/cancelled-popup-request')) toast('로그인 실패: '+(e&&(e.code||e.message)));
+  }
+}
+async function initFirebase(){
+  document.body.classList.add('fbapp','ro','notowner'); state.readOnly=true; state.isOwner=false;
+  setSync('wait','연결 중');
+  try{ await loadScript(FB_SDK+'firebase-app-compat.js'); await loadScript(FB_SDK+'firebase-auth-compat.js'); await loadScript(FB_SDK+'firebase-firestore-compat.js'); }
+  catch(e){ setSync('off','연결 실패 · 새로고침해 주세요'); return; }
+  firebase.initializeApp(FB);
+  const fs=firebase.firestore(); try{ fs.settings({ignoreUndefinedProperties:true,merge:true}); }catch(e){}
+  const auth=firebase.auth();
+  fb={fs,auth}; DB=fbWrap(fs); state.mode='cloud';
+  renderAuth();
+  fs.doc('admin/owner').onSnapshot(s=>{ fbState.ownerUid=s.exists?s.data().uid:null; fbState.ownerLoaded=true; applyRole(); },()=>{ fbState.ownerLoaded=true; applyRole(); });
+  subscribeAll();
+  let memberUnsub=null;
+  auth.onAuthStateChanged(u=>{
+    fbState.user=u; fbState.member=null; fbState.memberLoaded=false; if(memberUnsub){memberUnsub();memberUnsub=null}
+    if(u){
+      memberUnsub=fs.doc('members/'+u.uid).onSnapshot(s=>{
+        fbState.memberLoaded=true; fbState.member=s.exists?s.data():null; applyRole();
+      },()=>{fbState.memberLoaded=true;applyRole()});
+    }
+    applyRole();
+  });
+}
+async function fbClaimOwner(){
+  const u=fbState.user; if(!u) return;
+  try{ await fb.fs.doc('admin/owner').set({uid:u.uid,email:u.email||'',name:u.displayName||'',at:Date.now()}); toast('관리자로 지정됐어요'); }
+  catch(e){ toast('관리자 지정 실패: '+(e.code||e.message)); }
+}
+async function fbImportSnapshot(){
+  try{
+    const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'}); const j=await r.json();
+    const fs=fb.fs, base='trips/sapporo'; let batch=fs.batch(), n=0;
+    const put=async(path,data)=>{ const {id,...rest}=data; batch.set(fs.doc(path),rest); if(++n%400===0){ await batch.commit(); batch=fs.batch(); } };
+    await put(base,{...(j.settings||{})});
+    for(const c of ['stops','expenses','checklist','places']) for(const d of (j[c]||[])) await put(base+'/'+c+'/'+d.id,d);
+    if(j.fx) await put(base+'/fx/main',{...j.fx});
+    await batch.commit(); toast('기존 일정을 가져왔어요');
+  }catch(e){ toast('가져오기 실패: '+(e.code||e.message)); }
+}
+function fbBanner(){
+  if(!FB) return '';
+  const u=fbState.user;
+  if(u&&fbState.ownerLoaded&&!fbState.ownerUid) return `<div class="card" style="border:2px solid var(--accent)"><h2>👑 관리자 지정</h2><p style="margin-top:0">아직 이 앱의 관리자가 없어요. 지금 로그인한 <b>${esc(u.email||u.displayName||'')}</b> 계정을 관리자로 지정할까요? (한 번 지정하면 바꿀 수 없어요)</p><button class="btn" data-fb-claim>이 계정을 관리자로 지정</button></div>`;
+  if(state.isOwner&&!state.stops.length&&!state.settings.start) return `<div class="card" style="border:2px solid var(--accent2)"><h2>📦 기존 일정 가져오기</h2><p style="margin-top:0">Claude 플래너에서 마지막으로 공개한 일정·가계부·체크리스트를 이 앱으로 옮겨요.</p><button class="btn" data-fb-import>기존 일정 가져오기</button></div>`;
+  if(u&&!state.isOwner&&!fbApproved()) return `<div class="card"><h2>⏳ 승인 대기 중</h2><p style="margin:0">관리자에게 편집 권한을 요청했어요. 관리자가 승인하면 이 화면에서 바로 장소 추가, 지출 입력, 체크리스트 수정을 할 수 있어요.</p></div>`;
+  if(!u) return `<div class="card"><div class="row" style="justify-content:space-between"><span>일정을 같이 고치고 싶다면 로그인 후 관리자 승인을 받아 주세요.</span><button class="btn sm" data-auth="in">🔑 구글로 로그인</button></div></div>`;
+  return '';
+}
+function fbMembersCard(){
+  if(!FB||!state.isOwner) return '';
+  const list=fbState.members.filter(m=>m.uid!==fbState.ownerUid).sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1));
+  return `<div class="card"><h2>👥 편집 권한 승인</h2>
+    ${list.length?list.map(m=>`<div class="check"><span class="t"><b>${esc(m.name||'(이름 없음)')}</b> <span class="muted">${esc(m.email||'')}</span></span>
+      ${m.status==='approved'?'<span class="tag" style="background:#e7f6ee;color:#17663f">승인됨</span>':'<span class="tag" style="background:#fff4e5;color:#8a5a00">대기</span>'}
+      ${m.status==='approved'?`<button class="btn sec sm" data-fb-member="${m.uid}" data-st="pending">승인 취소</button>`:`<button class="btn sm" data-fb-member="${m.uid}" data-st="approved">승인</button>`}
+      <button class="icon" data-fb-member-del="${m.uid}" title="목록에서 지우기">✕</button></div>`).join(''):'<div class="muted">아직 요청한 사람이 없어요. 동행인이 공개 링크에서 구글로 로그인하면 여기에 나타나요.</div>'}
+    <p class="muted" style="margin-bottom:0">승인된 사람은 일정·가계부·체크리스트를 고칠 수 있어요. 설정, 환율, 승인 관리는 관리자만 할 수 있어요.</p></div>`;
+}
+
 async function initDB(){
+  if(FB) return initFirebase();
   if(VIEWER){ state.readOnly=true; state.isOwner=false; document.body.classList.add('ro','viewer'); setSync('wait','불러오는 중'); await loadSnapshot();
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadSnapshot(true)}); setInterval(()=>loadSnapshot(true),300000); return; }
   setSync('wait','이 기기에만 저장 중');
@@ -583,21 +717,7 @@ async function initDB(){
   const done=()=>{ pending--; if(pending<=0){ clearTimeout(timer); if(!state.readOnly) setSync('on','동행인과 공유 중'); } };
   const seen=new Set();
   const once=(k)=>{ if(!seen.has(k)){ seen.add(k); done(); } };
-  try{
-    DB.doc('admin/fx').onSnapshot(s=>{ state.fx=s.exists?{...s.data()}:{}; render(); },()=>{});
-    DB.doc('trip/settings').onSnapshot(s=>{
-      state.settings = {...(s.exists? s.data() : {}), ...(pendingSettings||{})};
-      if(!s.metadata.fromCache) once('settings');
-      render();
-    },e=>{ once('settings'); });
-    for(const c of COLLS){
-      DB.collection(c).onSnapshot(q=>{
-        state[c]=q.docs.map(d=>({...d.data(),id:d.id}));
-        if(!q.metadata.fromCache) once(c);
-        render();
-      },e=>{ once(c); if(e&&e.code==='revoked') setSync('off','연결 끊김'); });
-    }
-  }catch(e){ setSync('off','이 기기에만 저장'); DB=null; state.mode='local'; }
+  try{ subscribeAll(once); }catch(e){ setSync('off','이 기기에만 저장'); DB=null; state.mode='local'; }
   try{
     const user=await window.claude.use('user');
     state.isOwner = user&&user.isOwner ? !!(await user.isOwner()) : false; ownerChecked=true; document.body.classList.toggle('notowner',!state.isOwner); render();
@@ -880,7 +1000,7 @@ function viewPlan(){
   const lateCount=sch.rows.filter(r=>r.late>0).length;
   const noFlight=!(state.settings.flightOut||{}).arr&&!(state.settings.flightIn||{}).dep;
   const stayOpts=(sel)=>STAY_OPTS.map(m=>`<option value="${m}" ${Number(sel)===m?'selected':''}>${stayLabel(m)}</option>`).join('');
-  return `
+  return `${fbBanner()}
   <div class="card">
     <div class="chips">${Array.from({length:n},(_,i)=>`<button class="chip ${i+1===day?'on':''}" data-day="${i+1}">${dayLabel(i+1,true)}</button>`).join('')}</div>
     ${orphan?`<div class="warn">여행 기간 밖의 날짜에 장소 ${orphan}개가 남아 있어요. 설정에서 기간을 늘리면 다시 보여요.</div>`:''}
@@ -1186,13 +1306,14 @@ function viewSettings(){
     ${flightForm('flightIn')}
     <div class="muted">자동 입력은 2026년 겨울 인천·청주 ↔ 신치토세 시간표 기준이에요. 가는 편: ${Object.keys(FLIGHT_TABLE).filter(x=>FLIGHT_TABLE[x].dir==='flightOut').join(', ')} / 오는 편: ${Object.keys(FLIGHT_TABLE).filter(x=>FLIGHT_TABLE[x].dir==='flightIn').join(', ')}. 항공사 사정으로 바뀔 수 있으니 예약 확인서와 한 번 맞춰 보세요. 목록에 없는 편명은 시간을 직접 넣으면 돼요.</div>
   </div>
-  <div class="card"><h2>🌐 누구나 보는 공개 링크</h2>
+  <div class="card claudeonly"><h2>🌐 누구나 보는 공개 링크</h2>
     <p style="margin-top:0">Claude를 안 쓰는 사람도 카톡으로 받은 링크만 누르면 일정·지도·체크리스트를 앱처럼 볼 수 있어요. 가계부와 설정은 보이지 않아요.</p>
     <div class="row"><input type="text" readonly value="${PUBLIC_URL}" class="grow" id="publicUrl" onclick="this.select()"><button class="btn sec" data-copy-public>링크 복사</button></div>
     ${state.isOwner?`<div class="row" style="margin-top:8px"><button class="btn" data-publish-public>🌐 공개 링크 업데이트</button><span class="muted">${state.settings.publicAt?fmtAt(state.settings.publicAt)+' 업데이트':''}</span></div>${pubErr?`<div class="warn">페이지 파일 업로드 실패: ${esc(pubErr)}</div>`:''}`:''}
     <div class="muted" style="margin-top:6px">공개 링크는 일정을 바꿀 때마다 자동으로 바뀌지 않아요. 일정을 고친 뒤 위 버튼을 누르거나, Claude 채팅에서 “공개 링크 업데이트해줘”라고 하면 반영돼요.</div>
   </div>
-  <div class="card"><h2>🔗 동행인 초대</h2>
+  ${fbMembersCard()}
+  <div class="card claudeonly"><h2>🔗 동행인 초대</h2>
     <div class="row"><input type="text" readonly value="${PAGE_URL}" class="grow" id="inviteUrl" onclick="this.select()"><button class="btn" data-copy-invite>링크 복사</button></div>
     <ol class="muted" style="padding-left:18px;margin:10px 0 0">
       <li>이 페이지 오른쪽 위의 <b>공유</b>를 눌러요.</li>
@@ -1213,7 +1334,7 @@ function viewSettings(){
     <ol style="padding-left:18px;margin:0" class="muted"><li>페이지 오른쪽 위의 <b>공유</b>를 눌러요.</li><li>동행인을 초대할 때 <b>편집 가능한 권한</b>(Contributor 이상)을 줘요. 보기 권한만 주면 읽기만 할 수 있어요.</li></ol>
     <p class="muted">현재 상태: <b>${state.mode==='cloud'?(state.readOnly?'보기 전용':'공유 저장 중'):'이 기기에만 저장 중'}</b></p>
   </div>
-  <p class="muted" style="text-align:center">페이지 버전 2026.11.17-13</p>
+  <p class="muted" style="text-align:center">페이지 버전 2026.11.17-14</p>
   ${state.places.length?`<div class="card"><h2>📍 직접 추가한 장소</h2>${state.places.map(p=>`<div class="check"><span class="t">${esc(p.name)} <span class="muted">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></span><button class="icon needwrite" data-place-del="${p.id}">✕</button></div>`).join('')}</div>`:''}`;
 }
 
@@ -1567,6 +1688,12 @@ document.addEventListener('click',async e=>{
   if(d.shareAll!==undefined) return openShareText(0);
   if(d.shareDay!==undefined) return openShareText(state.day);
   if(d.shareCopy!==undefined){const ta=$('#shareText');try{await navigator.clipboard.writeText(ta.value);toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(err){ta.removeAttribute('readonly');ta.focus();ta.select();try{document.execCommand('copy');toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(e2){toast('글을 길게 눌러 전체 선택 후 복사해 주세요')}ta.setAttribute('readonly','')}return}
+  if(d.auth==='in') return fbLogin();
+  if(d.auth==='out'){ try{ await fb.auth.signOut(); }catch(e){} return; }
+  if(d.fbClaim!==undefined) return fbClaimOwner();
+  if(d.fbImport!==undefined) return fbImportSnapshot();
+  if(d.fbMember){ try{ await fb.fs.doc('members/'+d.fbMember).update({status:d.st}); toast(d.st==='approved'?'승인했어요':'승인을 취소했어요'); }catch(e){ toast('실패: '+(e.code||e.message)); } return; }
+  if(d.fbMemberDel){ try{ await fb.fs.doc('members/'+d.fbMemberDel).delete(); }catch(e){ toast('실패: '+(e.code||e.message)); } return; }
   if(d.publishPublic!==undefined) return publishSnapshot();
   if(d.copyPublic!==undefined){try{await navigator.clipboard.writeText(PUBLIC_URL);toast('공개 링크를 복사했어요')}catch(err){const el=$('#publicUrl');if(el){el.focus();el.select()}toast('링크를 길게 눌러 복사해 주세요')}return}
   if(d.copyInvite!==undefined){try{await navigator.clipboard.writeText(PAGE_URL);toast('초대 링크를 복사했어요')}catch(err){const el=$('#inviteUrl');if(el){el.focus();el.select()}toast('링크를 길게 눌러 복사해 주세요')}return}
