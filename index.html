@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>삿포로 여행</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#14213d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="삿포로 여행">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta property="og:title" content="삿포로 여행 일정 (11/30~12/3)">
+<meta property="og:description" content="일정·동선·지도·체크리스트를 앱처럼 보기">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --navy:#14213d; --navy2:#1f3160; --ink:#1c2333; --sub:#5f6b82; --line:#e3e8f0;
+  --bg:#f3f6fa; --card:#fff; --accent:#d7263d; --accent2:#2a6fdb; --ok:#1f9d63;
+  --walk:#7c879c; --subway:#2a6fdb; --tram:#1f9d63; --jr:#d7263d; --bus:#e8871e; --taxi:#c9a400; --car:#7b4fd6;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--accent2)}
+header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:18px 18px 54px;position:relative;overflow:hidden}
+header .snow{position:absolute;inset:0;pointer-events:none;opacity:.35}
+header h1{margin:0;font-size:22px;font-weight:900;letter-spacing:-.5px;position:relative}
+header .meta{font-size:13px;opacity:.85;margin-top:4px;position:relative;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.sync{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);padding:2px 10px;border-radius:99px;font-size:12px}
+.sync i{width:8px;height:8px;border-radius:50%;background:#aaa;display:inline-block}
+.sync.on i{background:#4ade80}.sync.wait i{background:#facc15}.sync.off i{background:#f87171}
+nav{position:sticky;top:0;z-index:20;margin:-40px 12px 0;background:var(--card);border-radius:var(--r);box-shadow:0 6px 24px rgba(20,33,61,.12);display:flex;overflow-x:auto;scrollbar-width:none}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:1 0 auto;border:0;background:none;padding:12px 14px;font-weight:700;color:var(--sub);font-size:14px;white-space:nowrap;border-bottom:3px solid transparent}
+nav button.on{color:var(--navy);border-bottom-color:var(--accent)}
+main{max-width:860px;margin:0 auto;padding:16px 12px 80px}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,33,61,.06)}
+.card h2{margin:0 0 10px;font-size:17px;font-weight:900;letter-spacing:-.3px}
+.card h3{margin:14px 0 8px;font-size:15px}
+.muted{color:var(--sub);font-size:13px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1;min-width:120px}
+input[type=text],input[type=number],input[type=date],input[type=time],select,textarea{border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:#fff;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(42,111,219,.12)}
+.btn{border:0;border-radius:10px;padding:9px 14px;font-weight:700;background:var(--navy);color:#fff;white-space:nowrap}
+.btn.sec{background:#eaf0f8;color:var(--navy)}
+.btn.red{background:#fde8eb;color:var(--accent)}
+.btn.sm{padding:5px 10px;font-size:13px;border-radius:8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.icon{border:0;background:#f1f4f9;border-radius:8px;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:var(--sub)}
+.icon:hover{background:#e3e9f3}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 13px;font-size:13px;font-weight:700;white-space:nowrap;color:var(--sub)}
+.chip.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip small{font-weight:400;opacity:.8;margin-left:4px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.stat{background:#f5f8fc;border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:18px;font-weight:900;color:var(--navy)}
+.stat span{font-size:12px;color:var(--sub)}
+.map{width:100%;border-radius:12px;background:#eef3f9;display:block}
+.timeline{margin-top:10px}
+.stop{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px}
+.num{flex:0 0 28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center}
+.stop .body{flex:1;min-width:0}
+.stop .name{font-weight:700;word-break:keep-all}
+.stop .sub{font-size:12px;color:var(--sub)}
+.stop .acts{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.seg{margin:0 0 0 13px;border-left:3px dashed var(--line);padding:8px 0 8px 20px}
+.seg .main{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:8px;padding:3px 9px;font-weight:700;font-size:13px;color:#fff}
+.seg .detail{font-size:13px;color:var(--ink);margin-top:3px}
+.seg .note{font-size:12px;color:var(--sub);margin-top:2px}
+.alts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.alt{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 9px;font-size:12px;text-align:left}
+.alt.on{border-color:var(--navy);background:#eef2fa}
+.picker{position:relative}
+.sugg{position:absolute;left:0;right:0;top:100%;margin-top:4px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(20,33,61,.15);z-index:30;max-height:280px;overflow:auto}
+.sugg button{display:block;width:100%;text-align:left;border:0;background:none;padding:9px 12px;border-bottom:1px solid #f1f4f8}
+.sugg button:hover,.sugg button.hl{background:#f3f7fd}
+.sugg small{color:var(--sub);margin-left:6px}
+.picked{font-size:13px;background:#eef6f1;color:#17663f;border-radius:8px;padding:6px 10px;margin-top:6px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--sub);font-weight:700}
+td.r,th.r{text-align:right}
+.bar{height:8px;border-radius:99px;background:#edf1f7;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent2)}
+.check{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid #f1f4f8}
+.check input{width:20px;height:20px;accent-color:var(--ok)}
+.check.done .t{text-decoration:line-through;color:var(--sub)}
+.check .t{flex:1}
+.tag{font-size:11px;background:#eef2fa;color:var(--navy);border-radius:6px;padding:2px 7px;font-weight:700}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.grid2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}}
+.empty{text-align:center;color:var(--sub);padding:22px 10px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:99;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1}
+.modal{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.modal .sheet{background:#fff;width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px;max-height:90vh;overflow:auto}
+@media (min-width:600px){.modal{align-items:center}.modal .sheet{border-radius:18px}}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--sub);margin-bottom:4px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin-top:6px}
+.legend i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.clim td{text-align:center;padding:6px 2px;font-size:12px}
+.clim tr.hl td{background:#fff4e5;font-weight:700}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;font-size:14px}
+.kv b{color:var(--sub);font-weight:700;font-size:13px}
+.warn{background:#fff7e6;color:#8a5a00;border-radius:10px;padding:8px 12px;font-size:13px;margin-top:8px}
+.ro .needwrite{display:none!important}
+.viewer nav button[data-tab=money],.viewer nav button[data-tab=setup],.viewer .ownonly{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <svg class="snow" viewBox="0 0 400 120" preserveAspectRatio="none" aria-hidden="true">
+    <g fill="#fff"><circle cx="20" cy="20" r="2"/><circle cx="80" cy="60" r="1.5"/><circle cx="140" cy="25" r="2.5"/><circle cx="210" cy="80" r="1.5"/><circle cx="260" cy="30" r="2"/><circle cx="320" cy="70" r="2.5"/><circle cx="370" cy="20" r="1.5"/><circle cx="350" cy="100" r="2"/><circle cx="60" cy="100" r="2"/><circle cx="180" cy="105" r="1.5"/></g>
+  </svg>
+  <h1 id="tripTitle">삿포로 여행</h1>
+  <div class="meta"><span id="tripDates">날짜를 설정해 주세요</span><span id="syncBadge" class="sync wait"><i></i><span>연결 중</span></span></div>
+</header>
+<nav id="tabs">
+  <button data-tab="plan" class="on">🗓 일정·동선</button>
+  <button data-tab="course">⭐ 추천 코스</button>
+  <button data-tab="route">📏 거리 계산</button>
+  <button data-tab="money">💴 가계부</button>
+  <button data-tab="check">✅ 체크리스트</button>
+  <button data-tab="info">ℹ️ 삿포로 정보</button>
+  <button data-tab="setup">⚙️ 설정</button>
+</nav>
+<main id="app"></main>
+<div id="toast" class="toast"></div>
+<div id="modalRoot"></div>
+
+<script>window.__VIEWER__=true;</script>
+<script>
+/* =========================================================
+   1. 기본 데이터: 장소·역·노선
+   ========================================================= */
+const LINES = {N:{n:'난보쿠선',c:'#1f9d63'},T:{n:'도자이선',c:'#e8871e'},H:{n:'도호선',c:'#2a6fdb'}};
+const STATIONS = {
+  sapporo:{n:'삿포로역',l:['N','H'],p:[43.0686,141.3507]},
+  odori:{n:'오도리역',l:['N','T','H'],p:[43.0601,141.3540]},
+  susukino:{n:'스스키노역',l:['N'],p:[43.0555,141.3530]},
+  hosui:{n:'호스이스스키노역',l:['H'],p:[43.0560,141.3570]},
+  nakajima:{n:'나카지마코엔역',l:['N'],p:[43.0458,141.3540]},
+  hiragishi:{n:'히라기시역',l:['N'],p:[43.0310,141.3570]},
+  makomanai:{n:'마코마나이역',l:['N'],p:[42.9905,141.3540]},
+  kita12:{n:'기타12조역',l:['N'],p:[43.0745,141.3490]},
+  kita24:{n:'기타24조역',l:['N'],p:[43.0905,141.3445]},
+  nishi11:{n:'니시11초메역',l:['T'],p:[43.0590,141.3430]},
+  nishi18:{n:'니시18초메역',l:['T'],p:[43.0575,141.3300]},
+  maruyama:{n:'마루야마코엔역',l:['T'],p:[43.0560,141.3180]},
+  nijuyon:{n:'니주욘켄역',l:['T'],p:[43.0675,141.3220]},
+  miyanosawa:{n:'미야노사와역',l:['T'],p:[43.0875,141.2775]},
+  buscenter:{n:'버스센터마에역',l:['T'],p:[43.0613,141.3620]},
+  shinsapporo:{n:'신삿포로역',l:['T'],p:[43.0390,141.4740]},
+  fukuzumi:{n:'후쿠즈미역',l:['H'],p:[43.0228,141.4030]},
+  kanjo:{n:'칸조도리히가시역',l:['H'],p:[43.0855,141.3770]},
+  sakaemachi:{n:'사카에마치역',l:['H'],p:[43.1100,141.3680]},
+};
+const AREAS = {
+  sapporo:'삿포로 시내', otaru:'오타루', airport:'신치토세 공항', jozankei:'조잔케이', yoichi:'요이치',
+  shikotsu:'시코츠호', noboribetsu:'노보리베츠', toya:'도야호', asahikawa:'아사히카와', biei:'비에이',
+  furano:'후라노', niseko:'니세코', hakodate:'하코다테', kitahiroshima:'기타히로시마', teine:'테이네', other:'기타 지역'
+};
+// [id, 이름, 위도, 경도, 지역, 분류, 역키[], 노면전차여부, 접근 힌트, 검색 키워드]
+const PLACE_ROWS = [
+ ['sapporo-st','삿포로역',43.0687,141.3508,'sapporo','교통',['sapporo'],0,'','sapporo station 札幌駅 JR'],
+ ['odori','오도리 공원',43.0605,141.3484,'sapporo','관광',['odori'],1,'','odori park 大通公園 눈축제 일루미네이션'],
+ ['tvtower','삿포로 TV타워',43.0611,141.3564,'sapporo','관광',['odori'],1,'','tv tower テレビ塔'],
+ ['clock','삿포로 시계탑',43.0625,141.3536,'sapporo','관광',['odori','sapporo'],0,'','clock tower 時計台'],
+ ['akarenga','홋카이도청 구본청사(붉은 벽돌)',43.0637,141.3480,'sapporo','관광',['sapporo','odori'],0,'','akarenga 赤れんが 道庁'],
+ ['susukino','스스키노',43.0556,141.3533,'sapporo','쇼핑',['susukino','hosui'],1,'','susukino すすきの'],
+ ['tanuki','다누키코지 상점가',43.0573,141.3530,'sapporo','쇼핑',['odori','susukino'],1,'','tanukikoji 狸小路'],
+ ['nijo','니조 시장',43.0577,141.3580,'sapporo','맛집',['odori','hosui'],0,'','nijo market 二条市場 해산물'],
+ ['ramen-yokocho','스스키노 라멘 요코초',43.0555,141.3540,'sapporo','맛집',['susukino'],1,'','ramen alley ラーメン横丁'],
+ ['daruma','징기스칸 다루마 본점',43.0545,141.3540,'sapporo','맛집',['susukino','hosui'],1,'','jingisukan daruma だるま 양고기'],
+ ['hokudai','홋카이도 대학',43.0757,141.3426,'sapporo','관광',['kita12','sapporo'],0,'','hokkaido university 北海道大学 은행나무'],
+ ['beer-museum','삿포로 맥주 박물관',43.0717,141.3685,'sapporo','관광',[],0,'삿포로역 앞 버스(88번 팩토리선) 약 10분 또는 택시','sapporo beer museum ビール博物館 비어가든'],
+ ['factory','삿포로 팩토리',43.0656,141.3626,'sapporo','쇼핑',['buscenter'],0,'','sapporo factory サッポロファクトリー'],
+ ['moiwa','모이와야마 로프웨이',43.0444,141.3220,'sapporo','관광',[],1,'노면전차 로프웨이이리구치 정류장에서 무료 셔틀버스 또는 도보 약 10분','mt moiwa 藻岩山 야경 ropeway'],
+ ['maruyama','마루야마 공원·홋카이도 신궁',43.0547,141.3077,'sapporo','관광',['maruyama'],0,'','maruyama park hokkaido jingu 北海道神宮 円山'],
+ ['shiroi','시로이 코이비토 파크',43.0889,141.2717,'sapporo','관광',['miyanosawa'],0,'미야노사와역에서 도보 약 7분','shiroi koibito 白い恋人パーク'],
+ ['okurayama','오쿠라야마 전망대',43.0465,141.2962,'sapporo','관광',[],0,'마루야마코엔역에서 버스 후 도보, 또는 택시 약 10분','okurayama 大倉山 jump'],
+ ['hitsujigaoka','히쓰지가오카 전망대',42.9958,141.3880,'sapporo','관광',[],0,'후쿠즈미역에서 주오버스 약 10분','hitsujigaoka 羊ヶ丘 클라크 동상'],
+ ['dome','삿포로 돔',43.0151,141.4096,'sapporo','관광',['fukuzumi'],0,'후쿠즈미역에서 도보 약 10분','sapporo dome 札幌ドーム'],
+ ['moerenuma','모에레누마 공원',43.1220,141.4280,'sapporo','관광',[],0,'칸조도리히가시역에서 버스 약 25분','moerenuma モエレ沼'],
+ ['nakajima','나카지마 공원',43.0442,141.3536,'sapporo','관광',['nakajima'],0,'','nakajima park 中島公園'],
+ ['jogai','삿포로 장외시장',43.0657,141.3311,'sapporo','맛집',['nijuyon'],0,'니주욘켄역에서 도보 약 7분','jogai market 場外市場 해산물 덮밥'],
+ ['nijo-soup','수프카레 (스스키노 일대)',43.0573,141.3556,'sapporo','맛집',['odori','susukino'],1,'','soup curry スープカレー'],
+ ['airport','신치토세 공항',42.7875,141.6810,'airport','교통',[],0,'','new chitose airport 新千歳空港 CTS'],
+ ['otaru-st','오타루역',43.1979,140.9937,'otaru','교통',[],0,'','otaru station 小樽駅'],
+ ['otaru-canal','오타루 운하',43.1990,141.0025,'otaru','관광',[],0,'','otaru canal 小樽運河'],
+ ['sakaimachi','사카이마치 거리',43.1925,141.0060,'otaru','쇼핑',[],0,'','sakaimachi 堺町通り 르타오 기타이치가라스'],
+ ['orgel','오타루 오르골당 본관',43.1905,141.0070,'otaru','관광',[],0,'','music box museum オルゴール堂'],
+ ['minami-otaru','미나미오타루역',43.1890,141.0040,'otaru','교통',[],0,'','minami otaru 南小樽'],
+ ['tenguyama','덴구야마 로프웨이',43.1845,140.9760,'otaru','관광',[],0,'오타루역 앞에서 버스 약 15분','tenguyama 天狗山 야경'],
+ ['sankaku','오타루 산카쿠 시장',43.1983,140.9930,'otaru','맛집',[],0,'','sankaku market 三角市場'],
+ ['nikka','닛카 위스키 요이치 증류소',43.1878,140.7840,'yoichi','관광',[],0,'JR 요이치역에서 도보 약 3분','nikka yoichi ニッカ 余市'],
+ ['jozankei','조잔케이 온천',42.9680,141.1630,'jozankei','온천',[],0,'','jozankei 定山渓 온천'],
+ ['shikotsu','시코츠호',42.7740,141.4050,'shikotsu','관광',[],0,'','lake shikotsu 支笏湖'],
+ ['jigokudani','노보리베츠 지옥계곡',42.4980,141.1480,'noboribetsu','관광',[],0,'','jigokudani 地獄谷 노보리베츠'],
+ ['noboribetsu','노보리베츠 온천가',42.4960,141.1450,'noboribetsu','온천',[],0,'','noboribetsu onsen 登別温泉'],
+ ['toya','도야호 온천',42.5640,140.8190,'toya','온천',[],0,'','lake toya 洞爺湖'],
+ ['asahikawa-st','아사히카와역',43.7627,142.3586,'asahikawa','교통',[],0,'','asahikawa station 旭川駅'],
+ ['asahiyama','아사히야마 동물원',43.7684,142.4800,'asahikawa','관광',[],0,'아사히카와역 앞에서 버스 약 40분','asahiyama zoo 旭山動物園 펭귄 산책'],
+ ['biei-st','비에이역',43.5885,142.4670,'biei','교통',[],0,'','biei station 美瑛駅'],
+ ['aoiike','청의 호수(아오이이케)',43.4930,142.6140,'biei','관광',[],0,'비에이역 앞에서 도호쿠버스 약 25분','blue pond 青い池 shirogane'],
+ ['shirahige','흰수염 폭포',43.4800,142.6400,'biei','관광',[],0,'비에이역 앞에서 도호쿠버스 약 30분','shirahige falls 白ひげの滝 시로가네 온천'],
+ ['furano-st','후라노역',43.3420,142.3830,'furano','교통',[],0,'','furano station 富良野駅'],
+ ['ningle','닝구르 테라스',43.3260,142.3530,'furano','쇼핑',[],0,'후라노역에서 버스 또는 택시 약 10분','ningle terrace ニングルテラス'],
+ ['tomita','팜 도미타',43.4185,142.4270,'furano','관광',[],0,'','farm tomita ファーム富田 라벤더'],
+ ['niseko','니세코 그랑 히라후',42.8620,140.6990,'niseko','관광',[],0,'','niseko grand hirafu ニセコ 스키'],
+ ['hakodate-st','하코다테역',41.7735,140.7265,'hakodate','교통',[],0,'','hakodate station 函館駅'],
+ ['hakodateyama','하코다테산 전망대',41.7590,140.7040,'hakodate','관광',[],0,'','mt hakodate 函館山 야경'],
+ ['goryokaku','고료카쿠',41.7970,140.7570,'hakodate','관광',[],0,'','goryokaku 五稜郭'],
+ ['escon','에스콘 필드 홋카이도',42.9900,141.5500,'kitahiroshima','관광',[],0,'JR 기타히로시마역에서 셔틀버스 또는 도보 약 20분','es con field エスコン 기타히로시마'],
+ ['mitsui-outlet','미쓰이 아울렛 파크 삿포로 기타히로시마',42.9850,141.5620,'kitahiroshima','쇼핑',[],0,'JR 기타히로시마역에서 셔틀버스','mitsui outlet 三井アウトレット'],
+ ['teine','삿포로 테이네 스키장',43.0758,141.1960,'teine','관광',[],0,'JR 테이네역에서 버스, 겨울엔 스키 셔틀','sapporo teine ski 手稲'],
+];
+const VIA = {hitsujigaoka:'fukuzumi', okurayama:'maruyama', moerenuma:'kanjo'};
+const PLACES = PLACE_ROWS.map(r=>({id:r[0],name:r[1],lat:r[2],lng:r[3],area:r[4],cat:r[5],st:r[6],tr:!!r[7],h:r[8],k:r[9],builtin:true}));
+
+/* 지역 간 대표 이동 방법 (시간은 대략적인 값) */
+const ROUTES = {
+ 'otaru|sapporo':[{k:'jr',d:'JR 쾌속 에어포트·보통열차 (삿포로역 ↔ 오타루역)',m:40,n:'바다 풍경은 오타루행 기준 오른쪽 창가'},{k:'bus',d:'고속버스 오타루호 (삿포로역 앞 버스터미널)',m:60}],
+ 'airport|sapporo':[{k:'jr',d:'JR 쾌속 에어포트 (신치토세공항역 ↔ 삿포로역)',m:40,n:'지정석 u시트를 쓰면 짐이 많아도 편해요'},{k:'bus',d:'공항 연락버스 (스스키노·오도리 호텔 앞 경유)',m:75}],
+ 'airport|otaru':[{k:'jr',d:'JR 쾌속 에어포트 오타루 직통편 (일부 열차)',m:80,n:'직통이 아니면 삿포로역에서 갈아타요'}],
+ 'jozankei|sapporo':[{k:'bus',d:'조테츠버스 갓파라이너호 (삿포로역 앞 출발, 예약제)',m:65},{k:'bus',d:'조테츠버스 7·8번 일반 노선 (삿포로역 앞)',m:80},{k:'car',d:'렌터카',m:50}],
+ 'asahikawa|sapporo':[{k:'jr',d:'JR 특급 카무이·라일락 (삿포로역 ↔ 아사히카와역)',m:90},{k:'bus',d:'고속버스 아사히카와호',m:125}],
+ 'biei|sapporo':[{k:'jr',d:'JR 특급으로 아사히카와역 → 후라노선 환승 → 비에이역',m:135,n:'겨울엔 비에이·청의 호수 당일 버스투어도 많이 이용해요'},{k:'car',d:'렌터카 (겨울 눈길 운전 주의)',m:150}],
+ 'furano|sapporo':[{k:'jr',d:'JR 특급으로 다키카와역 → 네무로선 환승 → 후라노역',m:130},{k:'bus',d:'고속버스 라벤더호',m:160},{k:'car',d:'렌터카',m:150}],
+ 'asahikawa|biei':[{k:'jr',d:'JR 후라노선 (아사히카와역 ↔ 비에이역)',m:40},{k:'bus',d:'도호쿠버스 (아사히카와역 ↔ 비에이역)',m:50}],
+ 'biei|furano':[{k:'jr',d:'JR 후라노선 (비에이역 ↔ 후라노역)',m:45},{k:'car',d:'렌터카',m:40}],
+ 'asahikawa|furano':[{k:'jr',d:'JR 후라노선 (아사히카와역 ↔ 후라노역)',m:80}],
+ 'noboribetsu|sapporo':[{k:'bus',d:'도난버스 고속 오유호 (삿포로역 앞 → 노보리베츠 온천가 직행, 예약제)',m:105},{k:'jr',d:'JR 특급 호쿠토·스즈란 → 노보리베츠역에서 버스 약 15분',m:100}],
+ 'sapporo|toya':[{k:'jr',d:'JR 특급 호쿠토 → 도야역에서 버스 약 20분',m:140},{k:'bus',d:'도난버스 직행 (삿포로역 앞)',m:165}],
+ 'niseko|sapporo':[{k:'bus',d:'고속버스·겨울 스키버스 (삿포로 시내 ↔ 히라후)',m:170},{k:'jr',d:'JR 오타루 → 구찬 환승 후 버스',m:170},{k:'car',d:'렌터카',m:140}],
+ 'otaru|yoichi':[{k:'jr',d:'JR 하코다테본선 (오타루역 ↔ 요이치역)',m:30},{k:'bus',d:'홋카이도 주오버스',m:40}],
+ 'sapporo|yoichi':[{k:'jr',d:'JR로 오타루역까지 간 뒤 요이치행 환승',m:70},{k:'bus',d:'고속버스 요이치호',m:85}],
+ 'sapporo|shikotsu':[{k:'jr',d:'JR 치토세역 → 주오버스 시코츠호행',m:95},{k:'car',d:'렌터카',m:60}],
+ 'airport|shikotsu':[{k:'car',d:'렌터카',m:40},{k:'bus',d:'공항 → 치토세역 → 시코츠호행 버스',m:70}],
+ 'airport|noboribetsu':[{k:'bus',d:'도난버스 공항 직행편 (노보리베츠 온천가)',m:75},{k:'jr',d:'JR 미나미치토세역 환승 특급 → 노보리베츠역 → 버스',m:85}],
+ 'hakodate|sapporo':[{k:'jr',d:'JR 특급 호쿠토 (삿포로역 ↔ 하코다테역)',m:225,n:'비행기(신치토세·오카다마 ↔ 하코다테)도 선택지예요'}],
+ 'kitahiroshima|sapporo':[{k:'jr',d:'JR 삿포로역 → 기타히로시마역, 이후 셔틀버스·도보',m:40},{k:'bus',d:'직행 셔틀버스 (운행일 확인)',m:50}],
+ 'airport|kitahiroshima':[{k:'jr',d:'JR 쾌속 에어포트 → 기타히로시마역, 이후 셔틀버스',m:40}],
+ 'sapporo|teine':[{k:'jr',d:'JR 삿포로역 → 테이네역, 이후 버스',m:45},{k:'bus',d:'겨울 스키 셔틀버스 (시내 호텔 출발)',m:50}],
+};
+const MODES = {
+  walk:{l:'도보',i:'🚶',c:'var(--walk)',g:'walking'},
+  subway:{l:'지하철',i:'🚇',c:'var(--subway)',g:'transit'},
+  tram:{l:'노면전차',i:'🚋',c:'var(--tram)',g:'transit'},
+  jr:{l:'JR 열차',i:'🚆',c:'var(--jr)',g:'transit'},
+  bus:{l:'버스',i:'🚌',c:'var(--bus)',g:'transit'},
+  taxi:{l:'택시',i:'🚕',c:'var(--taxi)',g:'driving'},
+  car:{l:'렌터카',i:'🚗',c:'var(--car)',g:'driving'},
+  tour:{l:'투어 버스',i:'🚐',c:'#0e9aa7',g:'driving'},
+  none:{l:'이동 없음',i:'·',c:'#ccc',g:'walking'},
+};
+const MODE_HEX = {walk:'#7c879c',subway:'#2a6fdb',tram:'#1f9d63',jr:'#d7263d',bus:'#e8871e',taxi:'#c9a400',car:'#7b4fd6',tour:'#0e9aa7',none:'#cccccc'};
+
+/* =========================================================
+   2. 거리·교통수단 계산
+   ========================================================= */
+function haversine(a,b){
+  const R=6371,toR=x=>x*Math.PI/180;
+  const dLat=toR(b.lat-a.lat),dLng=toR(b.lng-a.lng);
+  const h=Math.sin(dLat/2)**2+Math.cos(toR(a.lat))*Math.cos(toR(b.lat))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function roadKm(d){return d*(d<20?1.3:1.25)}
+function subwayFare(km){return km<3?210:km<7?250:km<11?290:km<15?330:370}
+function taxiFare(km){return Math.round((700+Math.max(0,km-1.3)*400)/10)*10}
+function nearestStations(p){
+  if(p.st&&p.st.length) return p.st;
+  if(p.area!=='sapporo') return [];
+  const out=[];
+  for(const [k,s] of Object.entries(STATIONS)){
+    if(haversine(p,{lat:s.p[0],lng:s.p[1]})<0.85) out.push(k);
+  }
+  return out;
+}
+function inferArea(lat,lng){
+  let best=null,bd=1e9;
+  for(const p of PLACES){const d=haversine({lat,lng},p);if(d<bd){bd=d;best=p}}
+  const lim = best&&best.area==='sapporo'?8:6;
+  return best&&bd<lim?best.area:'other';
+}
+function isWinter(){
+  const s=state.settings.start; const m = s? Number(s.slice(5,7)) : (new Date().getMonth()+1);
+  return m>=11||m<=3;
+}
+function subwayPlan(sa,sb){
+  // sa, sb: 역 키 배열
+  let best=null;
+  for(const a of sa)for(const b of sb){
+    if(a===b) continue;
+    const la=STATIONS[a].l, lb=STATIONS[b].l;
+    const common=la.find(x=>lb.includes(x));
+    const cand = common? {a,b,line:common,transfer:false}:{a,b,line:la[0],line2:lb[0],transfer:true};
+    if(!best || (best.transfer && !cand.transfer)) best=cand;
+  }
+  if(!best && sa.length && sb.length) return {same:true,a:sa[0]};
+  return best;
+}
+function describeSubway(p){
+  if(!p) return '지하철';
+  if(p.same) return `같은 역(${STATIONS[p.a].n}) 주변이라 걸어서 이동`;
+  const A=STATIONS[p.a].n,B=STATIONS[p.b].n;
+  if(!p.transfer) return `${LINES[p.line].n} ${A} → ${B}`;
+  const hub = (['N','H'].includes(p.line)&&['N','H'].includes(p.line2))?'오도리역 또는 삿포로역':'오도리역';
+  return `${LINES[p.line].n} ${A} → ${hub} 환승 → ${LINES[p.line2].n} ${B}`;
+}
+function opt(k,m,fare,d,n){return {k,m:Math.max(1,Math.round(m)),fare:fare??null,d:d||'',n:n||''}}
+
+function recommend(a,b){
+  const r=recommendBase(a,b);
+  if(r.d>=1.5) r.opts.push(opt('tour',r.rk/(r.rk>30?65:35)*60+5,0,'예약한 투어 버스로 이동 (투어 요금에 포함)'));
+  return r;
+}
+function recommendBase(a,b){
+  const d=haversine(a,b), rk=roadKm(d), winter=isWinter();
+  const walkSpeed = winter?3.6:4.4, walkLim = winter?0.9:1.2;
+  const walkMin = rk/walkSpeed*60;
+  const opts=[];
+  const aA=a.area||inferArea(a.lat,a.lng), bA=b.area||inferArea(b.lat,b.lng);
+  const hintB = b.h? `도착지 가는 법: ${b.h}`:'';
+  const snow = winter? '겨울 눈길이라 평소보다 천천히 걷는 걸로 계산했어요':'';
+
+  if(d<0.05){ return {d,rk,opts:[opt('walk',1,0,'같은 장소예요')]}; }
+
+  if(aA===bA){
+    if(aA==='sapporo'){
+      const sa=nearestStations(a), sb=nearestStations(b);
+      const sp = (sa.length&&sb.length)? subwayPlan(sa,sb):null;
+      const subwayOk = sp && !sp.same;
+      const tramOk = a.tr&&b.tr;
+      const subMin = 7+rk/30*60+(sp&&sp.transfer?5:0);
+      const taxiMin = rk/24*60+4;
+      if(d<walkLim || (sp&&sp.same && d<2)){
+        opts.push(opt('walk',walkMin,0,'걸어서 이동',snow));
+        if(subwayOk && d>0.6) opts.push(opt('subway',subMin,subwayFare(rk),describeSubway(sp)));
+        if(d>0.6) opts.push(opt('taxi',taxiMin,taxiFare(rk),'택시'));
+      } else {
+        if(subwayOk) opts.push(opt('subway',subMin,subwayFare(rk),describeSubway(sp),hintB));
+        if(tramOk && !subwayOk) opts.push(opt('tram',5+rk/14*60,200,'노면전차 (순환선, 요금 균일)',hintB));
+        if(!subwayOk && !tramOk && ((b.tr&&!sb.length&&sa.length)||(a.tr&&!sa.length&&sb.length))){
+          opts.push(opt('subway',subMin+8,subwayFare(rk)+200,'지하철로 오도리·스스키노까지 간 뒤 노면전차로 환승',hintB));
+        }
+        const vA=VIA[a.id], vB=VIA[b.id];
+        if(!subwayOk && ((vB&&(sa.length||vA))||(vA&&sb.length))){
+          const vp=subwayPlan(vA?[vA]:sa, vB?[vB]:sb);
+          if(vp&&!vp.same) opts.push(opt('subway',7+rk*0.8/30*60+15+(vp.transfer?5:0),subwayFare(rk)+230,describeSubway(vp)+(vB?' → 버스로 환승':''),hintB));
+        }
+        if(!subwayOk && !tramOk){
+          if(rk<7) opts.push(opt('taxi',taxiMin,taxiFare(rk),'택시가 가장 편해요 (근처에 지하철역이 없어요)',hintB));
+          opts.push(opt('bus',8+rk/18*60,null,'시내버스 (구글맵에서 노선 확인)',hintB));
+          if(rk>=7) opts.push(opt('taxi',taxiMin,taxiFare(rk),'택시'));
+        } else {
+          opts.push(opt('taxi',taxiMin,taxiFare(rk),winter?'택시 (짐이 많거나 눈이 많이 올 때)':'택시'));
+        }
+        if(d<2.2) opts.push(opt('walk',walkMin,0,'걸어서 이동',snow));
+      }
+    } else {
+      const lim = aA==='otaru'?2.2:walkLim;
+      if(d<lim){
+        opts.push(opt('walk',walkMin,0,aA==='otaru'?'운하·거리 구경하며 걷기 좋아요':'걸어서 이동',snow));
+        if(d>0.8) opts.push(opt('taxi',rk/24*60+4,taxiFare(rk),'택시'));
+      } else {
+        const rural=['biei','furano','niseko','toya','shikotsu'].includes(aA);
+        if(aA==='hakodate') opts.push(opt('tram',6+rk/14*60,null,'하코다테 시영 노면전차',hintB));
+        if(rural){
+          opts.push(opt('car',rk/40*60,null,winter?'렌터카 (눈길 운전 주의) 또는 투어버스':'렌터카',hintB));
+          opts.push(opt('bus',10+rk/25*60,null,'노선버스 (운행 편수가 적어요, 시간표 꼭 확인)'));
+          opts.push(opt('taxi',rk/35*60+4,taxiFare(rk),'택시'));
+        } else {
+          opts.push(opt('bus',8+rk/18*60,null,'노선버스',hintB));
+          opts.push(opt('taxi',rk/26*60+4,taxiFare(rk),'택시'));
+        }
+      }
+    }
+    return {d,rk,opts};
+  }
+
+  const key=[aA,bA].sort().join('|');
+  const known=ROUTES[key];
+  if(known){
+    for(const r of known) opts.push(opt(r.k,r.m,null,r.d,r.n||''));
+    // 출발·도착이 역/터미널에서 멀면 안내
+    const tail=[];
+    if(a.h&&a.area!=='sapporo') tail.push(`출발지: ${a.h}`);
+    if(b.h) tail.push(`도착지: ${b.h}`);
+    if(tail.length) opts[0].n=[opts[0].n,...tail].filter(Boolean).join(' · ');
+    if(!opts.some(o=>o.k==='car') && rk>15) opts.push(opt('car',rk/50*60,null,'렌터카'));
+    return {d,rk,opts};
+  }
+  // 알려진 노선이 없을 때: 거리 기준
+  if(rk<12){
+    opts.push(opt('taxi',rk/28*60+4,taxiFare(rk),'택시',hintB));
+    opts.push(opt('bus',10+rk/22*60,null,'노선버스 (구글맵에서 확인)'));
+  } else {
+    opts.push(opt('jr',25+rk/60*60,null,'JR 또는 고속버스 (구글맵에서 시간표 확인)',hintB));
+    opts.push(opt('car',rk/50*60,null,winter?'렌터카 (눈길 운전 주의)':'렌터카'));
+  }
+  return {d,rk,opts};
+}
+function fmtKm(k){return k<1?Math.round(k*1000)+'m':(k<10?k.toFixed(1):Math.round(k))+'km'}
+function fmtMin(m){m=Math.round(m);if(m<60)return m+'분';const h=Math.floor(m/60),r=m%60;return h+'시간'+(r?' '+r+'분':'')}
+function gmapsDir(a,b,k){return `https://www.google.com/maps/dir/?api=1&origin=${a.lat},${a.lng}&destination=${b.lat},${b.lng}&travelmode=${MODES[k]?MODES[k].g:'transit'}`}
+function gmapsSearch(q){return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q+' 札幌')}`}
+function parseMapsLink(s){
+  s=String(s||'').trim();
+  if(/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(s)) return {short:true};
+  if(!/google\.[a-z.]+\/maps|^https?:\/\/maps\.google/i.test(s)) return null;
+  const c=parseCoords(s); if(!c) return {nocoord:true};
+  let name='';
+  const m=s.match(/\/maps\/place\/([^/@?]+)/); if(m){try{name=decodeURIComponent(m[1].replace(/\+/g,' '))}catch(e){name=m[1].replace(/\+/g,' ')}}
+  if(!name){const q=s.match(/[?&]query=([^&]+)/);if(q){try{name=decodeURIComponent(q[1].replace(/\+/g,' '))}catch(e){}}}
+  if(/^-?\d+\.\d+,/.test(name)) name='';
+  return {...c,name:name.trim()};
+}
+async function placeFromLink(info,fallbackName){
+  const name=info.name||fallbackName||'새 장소';
+  const same=state.places.find(x=>x.name===name&&Math.abs(x.lat-info.lat)<0.0005&&Math.abs(x.lng-info.lng)<0.0005);
+  if(same) return {...same,custom:true};
+  if(state.readOnly) return {name,lat:info.lat,lng:info.lng,area:inferArea(info.lat,info.lng),cat:'내 장소'};
+  return await saveCustomPlace(name,{lat:info.lat,lng:info.lng});
+}
+function parseCoords(s){
+  if(!s) return null; s=String(s).trim();
+  let m=s.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/); if(m) return {lat:+m[1],lng:+m[2]};
+  m=s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); if(m) return {lat:+m[1],lng:+m[2]};
+  m=s.match(/(-?\d{1,3}\.\d+)\s*[, ]\s*(-?\d{1,3}\.\d+)/); if(m) return {lat:+m[1],lng:+m[2]};
+  return null;
+}
+
+/* =========================================================
+   3. 저장소: 공유 DB (없으면 이 기기에만 저장)
+   ========================================================= */
+const state = {
+  settings:{}, stops:[], expenses:[], checklist:[], places:[],
+  tab:(location.hash||'').slice(1)||'plan', day:1, readOnly:false, mode:'local', fx:loadLS('fx',{}), isOwner:true,
+  calc: loadLS('calc',[]), editingExpense:null,
+};
+const TABS=['plan','course','route','money','check','info','setup'];
+if(!TABS.includes(state.tab)) state.tab='plan';
+let DB=null;
+function loadLS(k,def){try{const v=localStorage.getItem('sp_'+k);return v?JSON.parse(v):def}catch(e){return def}}
+function saveLS(k,v){try{localStorage.setItem('sp_'+k,JSON.stringify(v))}catch(e){}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+const COLLS=['stops','expenses','checklist','places'];
+function loadLocal(){
+  state.settings=loadLS('settings',{});
+  for(const c of COLLS) state[c]=loadLS(c,[]);
+}
+function persistLocal(c){ if(state.mode==='local') saveLS(c, c==='settings'?state.settings:state[c]); }
+
+async function writeDoc(coll,id,data){
+  // 화면에 먼저 반영
+  const arr=state[coll]; const i=arr.findIndex(x=>x.id===id);
+  const row={...data,id};
+  if(i>=0) arr[i]=row; else arr.push(row);
+  persistLocal(coll); render();
+  if(DB){
+    const body={...data}; delete body.id;
+    try{ await DB.collection(coll).doc(id).set(body); }
+    catch(e){ handleWriteError(e); }
+  }
+}
+async function deleteDoc(coll,id){
+  state[coll]=state[coll].filter(x=>x.id!==id); persistLocal(coll); render();
+  if(DB){ try{ await DB.collection(coll).doc(id).delete(); }catch(e){ handleWriteError(e); } }
+}
+let settingsTimer=null, pendingSettings=null, settingsWriting=Promise.resolve();
+async function saveSettings(patch){
+  state.settings={...state.settings,...patch}; persistLocal('settings');
+  pendingSettings={...(pendingSettings||{}),...patch};
+  render();
+  if(DB){
+    clearTimeout(settingsTimer);
+    settingsTimer=setTimeout(()=>{
+      const sent=pendingSettings; const body={...state.settings};
+      settingsWriting=settingsWriting.then(async()=>{
+        try{ await DB.doc('trip/settings').set(body); if(pendingSettings===sent) pendingSettings=null; }
+        catch(e){ pendingSettings=null; handleWriteError(e); }
+      });
+    },300);
+  } else pendingSettings=null;
+}
+function handleWriteError(e){
+  if(e&&e.code==='invalid_argument'){ state.readOnly=true; document.body.classList.add('ro'); toast('편집 권한이 없어요. 공유한 사람에게 편집 권한을 요청하세요.'); setSync('off','보기 전용'); }
+  else if(e&&e.code==='quota_exceeded'){ toast('저장 공간이 가득 찼어요. 오래된 항목을 지워 주세요.'); }
+  else { toast('저장에 실패했어요. 잠시 후 다시 시도해 주세요.'); }
+}
+function setSync(cls,txt){const b=document.getElementById('syncBadge');b.className='sync '+cls;b.lastElementChild.textContent=txt}
+
+const VIEWER=!!window.__VIEWER__;
+const GH={owner:'vrkv786n2b-lang',repo:'sapporo-trip',branch:'main'};
+const PUBLIC_URL=`https://${GH.owner}.github.io/${GH.repo}/`;
+async function loadSnapshot(silent){
+  try{
+    const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'}); const j=await r.json();
+    state.settings=j.settings||{}; state.stops=j.stops||[]; state.checklist=j.checklist||[]; state.places=j.places||[]; state.fx=j.fx||{}; state.expenses=[];
+    setSync('on','보기 전용 · '+(j.updatedAt?fmtAt(j.updatedAt)+' 기준':'')); render();
+  }catch(e){ if(!silent) setSync('off','일정을 불러오지 못했어요'); }
+}
+function buildSnapshot(){
+  const strip=a=>a.map(x=>({...x}));
+  const {budget,rate,...settings}=state.settings;
+  return {updatedAt:Date.now(),settings,stops:strip(state.stops),checklist:strip(state.checklist),places:strip(state.places),fx:{rate:state.fx.rate||null,updatedAt:state.fx.updatedAt||null}};
+}
+async function publishSnapshot(){
+  const btn=document.querySelector('[data-publish-public]'); if(btn){btn.disabled=true;btn.textContent='올리는 중…'}
+  try{
+    const mcp=window.claude&&await window.claude.use('mcp');
+    if(!mcp) throw {code:'no_mcp'};
+    let sha='';
+    try{ const r=await mcp.callTool('github','get_file_contents',{owner:GH.owner,repo:GH.repo,path:'data.json',ref:'refs/heads/'+GH.branch}); const m=JSON.stringify(r).match(/"?sha"?\s*[:=]\s*\\?"?([0-9a-f]{40})/i)||JSON.stringify(r).match(/\b([0-9a-f]{40})\b/); if(m) sha=m[1]; }catch(e){}
+    const args={owner:GH.owner,repo:GH.repo,path:'data.json',branch:GH.branch,message:'일정 업데이트',content:JSON.stringify(buildSnapshot())}; if(sha) args.sha=sha;
+    await mcp.callTool('github','create_or_update_file',args);
+    state.settings.publicAt=Date.now(); saveSettings({publicAt:Date.now()});
+    toast('공개 링크를 최신 일정으로 업데이트했어요 (1~2분 뒤 반영)');
+  }catch(e){
+    toast(e&&e.code==='no_mcp'?'여기서는 GitHub에 올릴 수 없어요. Claude 채팅에서 "공개 링크 업데이트해줘"라고 말해 주세요':'업데이트에 실패했어요. Claude 채팅에서 "공개 링크 업데이트해줘"라고 말해 주세요');
+  }
+  if(btn){btn.disabled=false;btn.textContent='🌐 공개 링크 업데이트'}
+}
+async function initDB(){
+  if(VIEWER){ state.readOnly=true; state.isOwner=false; document.body.classList.add('ro','viewer'); setSync('wait','불러오는 중'); await loadSnapshot();
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadSnapshot(true)}); setInterval(()=>loadSnapshot(true),300000); return; }
+  setSync('wait','이 기기에만 저장 중');
+  if(!window.claude||!window.claude.use){ setSync('off','이 기기에만 저장'); return; }
+  let db=null;
+  try{ db=await window.claude.use('db'); }catch(e){ db=null; }
+  if(!db){ setSync('off','이 기기에만 저장'); return; }
+  DB=db; state.mode='cloud'; state.isOwner=false;
+  setSync('wait','동기화 중');
+  let pending=COLLS.length+1;
+  const timer=setTimeout(()=>{ if(pending>0) setSync('off','연결이 늦어요'); },10000);
+  const done=()=>{ pending--; if(pending<=0){ clearTimeout(timer); if(!state.readOnly) setSync('on','동행인과 공유 중'); } };
+  const seen=new Set();
+  const once=(k)=>{ if(!seen.has(k)){ seen.add(k); done(); } };
+  try{
+    DB.doc('admin/fx').onSnapshot(s=>{ state.fx=s.exists?{...s.data()}:{}; render(); },()=>{});
+    DB.doc('trip/settings').onSnapshot(s=>{
+      state.settings = {...(s.exists? s.data() : {}), ...(pendingSettings||{})};
+      if(!s.metadata.fromCache) once('settings');
+      render();
+    },e=>{ once('settings'); });
+    for(const c of COLLS){
+      DB.collection(c).onSnapshot(q=>{
+        state[c]=q.docs.map(d=>({...d.data(),id:d.id}));
+        if(!q.metadata.fromCache) once(c);
+        render();
+      },e=>{ once(c); if(e&&e.code==='revoked') setSync('off','연결 끊김'); });
+    }
+  }catch(e){ setSync('off','이 기기에만 저장'); DB=null; state.mode='local'; }
+  try{
+    const user=await window.claude.use('user');
+    state.isOwner = user&&user.isOwner ? !!(await user.isOwner()) : false; render();
+    if(user&&user.can){ const ok=await user.can('data.write'); if(ok===false){ state.readOnly=true; document.body.classList.add('ro'); setSync('on','보기 전용'); } }
+  }catch(e){}
+}
+
+/* =========================================================
+   4. 공통 헬퍼
+   ========================================================= */
+const $=s=>document.querySelector(s);
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),2600)}
+function hotels(){const st=state.settings;const list=Array.isArray(st.hotels)?st.hotels:[];return list.length?list:(st.hotel?[{...st.hotel,from:1,to:dayCount()}]:[])}
+function hotelsForDay(day){return hotels().filter(h=>day>=Number(h.from||1)&&day<=Number(h.to||dayCount()))}
+function members(){const m=(state.settings.members||'').split(',').map(s=>s.trim()).filter(Boolean);return m.length?m:['나']}
+function rate(){return Number(state.fx.rate)||Number(state.settings.rate)||850}
+function toKRW(amount,cur,r){return cur==='KRW'?amount:amount*(Number(r)||rate())/100}
+function toJPY(amount,cur,r){return cur==='JPY'?amount:amount*100/(Number(r)||rate())}
+function effRate(e){const o=(state.fx.exRates||{})[e.id];return Number(o)||Number(e.rate)||rate()}
+async function saveExRate(id,r){
+  const prev=state.fx; const exRates={...(state.fx.exRates||{})}; if(r) exRates[id]=r; else delete exRates[id];
+  state.fx={...state.fx,exRates}; if(state.mode==='local') saveLS('fx',state.fx); render();
+  if(DB){ try{ await DB.doc('admin/fx').set({...state.fx}); }
+    catch(e){ state.fx=prev; render(); toast(e&&e.code==='invalid_argument'?'환율은 관리자만 바꿀 수 있어요':'저장에 실패했어요'); return false; } }
+  return true;
+}
+function fmtAt(ts){try{return new Date(ts).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}catch(e){return ''}}
+async function saveFx(r){
+  const history=[{rate:r,at:Date.now()},...(state.fx.history||[])].slice(0,30);
+  const prev=state.fx; state.fx={rate:r,updatedAt:Date.now(),history};
+  if(state.mode==='local') saveLS('fx',state.fx);
+  render();
+  if(DB){ try{ await DB.doc('admin/fx').set({...state.fx}); toast('환율을 적용했어요'); }
+    catch(e){ state.fx=prev; render(); toast(e&&e.code==='invalid_argument'?'환율은 관리자만 바꿀 수 있어요':'저장에 실패했어요. 잠시 후 다시 시도해 주세요.'); } }
+  else toast('환율을 적용했어요');
+}
+function won(n){return '₩'+Math.round(n).toLocaleString('ko-KR')}
+function yen(n){return '¥'+Math.round(n).toLocaleString('ko-KR')}
+const DOW=['일','월','화','수','목','금','토'];
+function dayCount(){
+  const s=state.settings.start,e=state.settings.end;
+  if(s&&e){const n=Math.round((new Date(e)-new Date(s))/864e5)+1;if(n>0&&n<=30)return n}
+  return Number(state.settings.days)||4;
+}
+function dayLabel(i,short){
+  const s=state.settings.start;
+  if(!s) return 'Day '+i;
+  const d=new Date(s); d.setDate(d.getDate()+i-1);
+  const md=(d.getMonth()+1)+'/'+d.getDate();
+  return short? `Day ${i}<small>${md} ${DOW[d.getDay()]}</small>` : `Day ${i} · ${md} (${DOW[d.getDay()]})`;
+}
+function dayDate(i){const s=state.settings.start;if(!s)return '';const d=new Date(s);d.setDate(d.getDate()+i-1);return d.toISOString().slice(0,10)}
+function allPlaces(){return [...state.places.map(p=>({...p,custom:true})),...PLACES]}
+function findPlace(name){const n=(name||'').trim();return allPlaces().find(p=>p.name===n)}
+function stopsOf(day){return state.stops.filter(s=>Number(s.day)===day).sort((a,b)=>(a.order??0)-(b.order??0))}
+function placeOfStop(s){
+  const base = s.pid? allPlaces().find(p=>p.id===s.pid):null;
+  return {...(base||{}),name:s.name,lat:Number(s.lat),lng:Number(s.lng),area:s.area||(base&&base.area)||inferArea(s.lat,s.lng)};
+}
+
+/* =========================================================
+   5. 장소 선택기 (검색 + 직접 좌표)
+   ========================================================= */
+const pickers={};
+function pickerHTML(id,ph){
+  const p=pickers[id]||(pickers[id]={q:'',sel:null,open:false,hl:0,manual:false});
+  return `<div class="picker" data-picker="${id}">
+    <input type="text" data-pk-input="${id}" placeholder="${esc(ph||'장소 이름 검색 또는 구글맵 링크 붙여넣기')}" value="${esc(p.q)}" autocomplete="off">
+    <div class="sugg" data-pk-sugg="${id}" style="display:none"></div>
+    ${p.sel?`<div class="picked"><span>📍 ${esc(p.sel.name)} <span class="muted">${esc(AREAS[p.sel.area]||'')}</span></span><button class="icon" data-pk-clear="${id}" title="선택 취소">✕</button></div>`:''}
+    ${p.manual&&!p.sel?`<div class="warn">목록에 없는 장소예요. 아래 링크로 구글맵에서 장소를 연 다음, <b>주소창의 링크를 통째로 복사</b>해서 붙여넣으면 바로 추가돼요.
+      <div class="row" style="margin-top:6px"><input type="text" class="grow" data-pk-coord="${id}" placeholder="구글맵 링크 또는 좌표 붙여넣기"><button class="btn sm" data-pk-coordok="${id}">확인</button></div>
+      <a href="${gmapsSearch(p.q)}" target="_blank" rel="noopener">구글맵에서 “${esc(p.q)}” 찾기 ↗</a>
+      <div class="muted" style="margin-top:4px">PC: 주소창 링크를 복사해 붙여넣기 (위 검색칸에 바로 붙여넣어도 돼요). 휴대폰 구글맵 앱: 장소를 길게 눌러 나오는 좌표(예: 43.05461, 141.35365)를 복사해 붙여넣기. 앱의 ‘공유’ 짧은 링크는 위치가 안 담겨 있어서 쓸 수 없어요.</div></div>`:''}
+  </div>`;
+}
+function searchPlaces(q){
+  q=q.trim().toLowerCase(); if(!q) return [];
+  const res=allPlaces().filter(p=>p.name.toLowerCase().includes(q)||(p.k||'').toLowerCase().includes(q)||(AREAS[p.area]||'').includes(q));
+  return res.slice(0,12);
+}
+function renderSugg(id){
+  const p=pickers[id], box=document.querySelector(`[data-pk-sugg="${id}"]`); if(!box) return;
+  if(!p.open||!p.q.trim()){box.style.display='none';return}
+  const list=searchPlaces(p.q); p.list=list;
+  box.innerHTML=list.map((x,i)=>`<button data-pk-pick="${id}" data-i="${i}" class="${i===p.hl?'hl':''}">${esc(x.name)}<small>${esc(AREAS[x.area]||'')} · ${esc(x.cat||'내 장소')}</small></button>`).join('')
+    +`<button data-pk-manual="${id}">➕ “${esc(p.q)}” 직접 추가하기 <small>좌표 입력</small></button>`;
+  box.style.display='block';
+}
+function pickPlace(id,place){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();const p=pickers[id];p.sel=place;p.q=place.name;p.open=false;p.manual=false;render()}
+
+/* =========================================================
+   6. 지도(SVG)
+   ========================================================= */
+/* 바탕 지도용 대략적인 지형 (도식, 실제 축척과 조금 다를 수 있음) */
+const HOKKAIDO=[[45.52,141.94],[45.3,142.15],[44.95,142.55],[44.6,142.97],[44.35,143.35],[44.12,143.95],[44.02,144.27],[43.95,144.6],[44.1,145.05],[44.35,145.33],[44.05,145.12],[43.65,145.15],[43.38,145.82],[43.28,145.55],[43.05,145.15],[42.98,144.38],[42.75,143.65],[42.55,143.38],[41.93,143.24],[42.15,142.85],[42.35,142.35],[42.6,141.9],[42.63,141.6],[42.52,141.32],[42.32,140.97],[42.5,140.72],[42.38,140.45],[42.15,140.6],[41.95,140.75],[41.82,140.95],[41.78,141.1],[41.73,140.72],[41.55,140.4],[41.42,140.08],[41.6,140.0],[41.9,140.05],[42.3,139.85],[42.55,139.85],[42.85,140.2],[43.05,140.33],[43.37,140.47],[43.24,140.75],[43.2,140.95],[43.2,141.05],[43.15,141.2],[43.22,141.33],[43.27,141.38],[43.6,141.33],[43.95,141.63],[44.4,141.75],[44.95,141.72],[45.42,141.67]];
+const JR_LINES=[
+  [[43.1979,140.9937],[43.17,141.1],[43.124,141.239],[43.08,141.3],[43.0686,141.3507],[43.0386,141.4719],[42.985,141.563],[42.828,141.651],[42.793,141.672],[42.7875,141.681]],
+  [[43.0686,141.3507],[43.104,141.537],[43.2,141.76],[43.56,141.91],[43.72,142.04],[43.7627,142.3586]],
+  [[43.7627,142.3586],[43.5885,142.467],[43.342,142.383]],
+  [[42.793,141.672],[42.64,141.6],[42.452,141.108],[42.54,140.77],[42.1,140.58],[41.7735,140.7265]],
+];
+const TOWNS=[['삿포로',43.0686,141.3507],['오타루',43.1979,140.9937],['신치토세 공항',42.7875,141.681],['아사히카와',43.7627,142.3586],['비에이',43.5885,142.467],['후라노',43.342,142.383],['노보리베츠',42.4960,141.1450],['하코다테',41.7735,140.7265],['니세코',42.862,140.699],['도야호',42.564,140.819],['조잔케이',42.968,141.163],['토마코마이',42.64,141.6],['구시로',42.98,144.38],['오비히로',42.92,143.2],['왓카나이',45.41,141.67]];
+const SUBWAY_ROUTES={N:['kita24','kita12','sapporo','odori','susukino','nakajima','hiragishi','makomanai'],T:['miyanosawa','nijuyon','maruyama','nishi18','nishi11','odori','buscenter','shinsapporo'],H:['sakaemachi','kanjo','sapporo','odori','hosui','fukuzumi']};
+
+function gmapsAll(pts){return 'https://www.google.com/maps/dir/'+pts.map(p=>p.lat.toFixed(5)+','+p.lng.toFixed(5)).join('/')}
+function mapSVG(pts,segModes){
+  if(!pts.length) return `<div class="empty" style="background:#eef3f9;border-radius:12px">장소를 추가하면 여기에 동선이 그려져요 🗺</div>`;
+  let minLat=Math.min(...pts.map(p=>p.lat)),maxLat=Math.max(...pts.map(p=>p.lat));
+  let minLng=Math.min(...pts.map(p=>p.lng)),maxLng=Math.max(...pts.map(p=>p.lng));
+  const cl=Math.cos(((minLat+maxLat)/2)*Math.PI/180);
+  let w=(maxLng-minLng)*cl, h=maxLat-minLat;
+  const minSpan=0.035; if(w<minSpan){const c=(minLng+maxLng)/2;minLng=c-minSpan/cl/2;maxLng=c+minSpan/cl/2;w=minSpan}
+  if(h<minSpan){const c=(minLat+maxLat)/2;minLat=c-minSpan/2;maxLat=c+minSpan/2;h=minSpan}
+  const W=640,H=Math.max(260,Math.min(420,W*h/w)),pad=40;
+  const sc=Math.min((W-2*pad)/w,(H-2*pad)/h);
+  const ox=(W-w*sc)/2, oy=(H-h*sc)/2;
+  const X=lng=>ox+(lng-minLng)*cl*sc, Y=lat=>oy+(maxLat-lat)*sc;
+  const span=Math.max(w,h); // 도 단위
+  const poly=arr=>arr.map(([la,ln])=>`${X(ln).toFixed(1)},${Y(la).toFixed(1)}`).join(' ');
+  // 1) 바다·육지
+  let base=`<rect width="${W}" height="${H}" fill="#d6e6f5"/><polygon points="${poly(HOKKAIDO)}" fill="#f3f5ef" stroke="#c4cfbb" stroke-width="1.5"/>`;
+  // 2) JR 노선
+  base+=JR_LINES.map(l=>`<polyline points="${poly(l)}" fill="none" stroke="#9aa6b8" stroke-width="${span<0.3?3:2}" stroke-dasharray="${span<0.3?'8 5':'5 4'}"/>`).join('');
+  // 3) 시내 지하철 (가까이 볼 때만)
+  if(span<0.25){
+    for(const [ln,route] of Object.entries(SUBWAY_ROUTES)){
+      const ps=route.map(k=>STATIONS[k].p);
+      base+=`<polyline points="${poly(ps)}" fill="none" stroke="${LINES[ln].c}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>`;
+    }
+    base+=Object.values(STATIONS).map(s=>`<circle cx="${X(s.p[1])}" cy="${Y(s.p[0])}" r="3.5" fill="#fff" stroke="#7d8aa0" stroke-width="1.2"/>${span<0.08?`<text x="${X(s.p[1])+6}" y="${Y(s.p[0])-5}" font-size="10" fill="#7d8aa0">${esc(s.n)}</text>`:''}`).join('');
+  }
+  // 4) 큰 지명 (넓게 볼 때)
+  if(span>=0.25) base+=TOWNS.filter(([n,la,ln])=>!pts.some(q=>Math.abs(q.lat-la)<span*0.06&&Math.abs(q.lng-ln)<span*0.12)).map(([n,la,ln])=>`<circle cx="${X(ln)}" cy="${Y(la)}" r="3" fill="#7d8aa0"/><text x="${X(ln)+6}" y="${Y(la)+4}" font-size="12" fill="#5f6b82" font-weight="700" paint-order="stroke" stroke="#f3f5ef" stroke-width="3">${n}</text>`).join('');
+  // 5) 주변 참고 장소
+  const ctx=span<0.25?PLACES.filter(p=>p.lat>=minLat-h*.2&&p.lat<=maxLat+h*.2&&p.lng>=minLng-w/cl*.2&&p.lng<=maxLng+w/cl*.2&&!pts.some(q=>q.name===p.name)):[];
+  const ctxSvg=ctx.slice(0,30).map(p=>`<circle cx="${X(p.lng)}" cy="${Y(p.lat)}" r="3" fill="#b8c4d6"/>${ctx.length<18?`<text x="${X(p.lng)+5}" y="${Y(p.lat)+4}" font-size="10" fill="#93a0b5" paint-order="stroke" stroke="#f3f5ef" stroke-width="3">${esc(p.name)}</text>`:''}`).join('');
+  let g='';
+  for(let i=0;i<pts.length-1;i++){
+    const a=pts[i],b=pts[i+1],k=segModes[i]||'walk';
+    g+=`<line x1="${X(a.lng)}" y1="${Y(a.lat)}" x2="${X(b.lng)}" y2="${Y(b.lat)}" stroke="#fff" stroke-width="8" stroke-linecap="round" opacity=".8"/><line x1="${X(a.lng)}" y1="${Y(a.lat)}" x2="${X(b.lng)}" y2="${Y(b.lat)}" stroke="${MODE_HEX[k]}" stroke-width="4.5" stroke-linecap="round" ${k==='walk'?'stroke-dasharray="2 8"':''}/>`;
+  }
+  const placed=[];
+  const showLabel=(x,y)=>{if(placed.some(q=>Math.abs(q[0]-x)<90&&Math.abs(q[1]-y)<16))return false;placed.push([x,y]);return true};
+  const pins=pts.map((p,i)=>`<g><circle cx="${X(p.lng)}" cy="${Y(p.lat)}" r="12" fill="${p.virtual?'#d7263d':'#14213d'}" stroke="#fff" stroke-width="2.5"/><text x="${X(p.lng)}" y="${Y(p.lat)+4}" text-anchor="middle" font-size="11" font-weight="900" fill="#fff">${p.virtual?'✈':i+1}</text>${showLabel(X(p.lng),Y(p.lat))?`<text x="${X(p.lng)+15}" y="${Y(p.lat)-8}" font-size="12" font-weight="700" fill="#14213d" paint-order="stroke" stroke="#fff" stroke-width="4">${esc(p.name.length>14?p.name.slice(0,13)+'…':p.name)}</text>`:''}</g>`).join('');
+  const kmPerPx=1/sc*111; const target=[0.1,0.2,0.5,1,2,5,10,20,50,100].find(v=>v/kmPerPx>60)||100;
+  const bar=target/kmPerPx;
+  return `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="동선 지도">
+    ${base}${ctxSvg}${g}${pins}
+    <g transform="translate(14,${H-16})"><rect x="-6" y="-12" width="${bar+56}" height="22" rx="6" fill="#fff" opacity=".8"/><line x1="0" y1="0" x2="${bar}" y2="0" stroke="#5f6b82" stroke-width="2"/><line x1="0" y1="-4" x2="0" y2="4" stroke="#5f6b82"/><line x1="${bar}" y1="-4" x2="${bar}" y2="4" stroke="#5f6b82"/><text x="${bar+6}" y="4" font-size="11" fill="#5f6b82">${target<1?target*1000+'m':target+'km'}</text></g>
+    <text x="${W-12}" y="18" text-anchor="end" font-size="11" fill="#5f6b82">N ↑</text>
+  </svg>
+  <div class="legend">${Object.entries(MODES).filter(([k])=>k!=='none').map(([k,m])=>`<span><i style="background:${MODE_HEX[k]}"></i>${m.l}</span>`).join('')}<span><i style="background:#9aa6b8"></i>JR 노선</span>${span<0.25?Object.values(LINES).map(l=>`<span><i style="background:${l.c};opacity:.5"></i>${l.n}</span>`).join(''):''}</div>
+  ${pts.length>1?`<div style="margin-top:6px"><a class="btn sec sm" style="display:inline-block;text-decoration:none" href="${gmapsAll(pts)}" target="_blank" rel="noopener">🗺 구글맵에서 실제 지도로 전체 경로 보기 ↗</a></div>`:`<div style="margin-top:6px"><a class="btn sec sm" style="display:inline-block;text-decoration:none" href="https://www.google.com/maps/search/?api=1&query=${pts[0].lat},${pts[0].lng}" target="_blank" rel="noopener">🗺 구글맵에서 보기 ↗</a></div>`}`;
+}
+
+/* =========================================================
+   7. 경로(구간) 렌더링 — 일정과 거리 계산이 함께 씀
+   ========================================================= */
+function computeRoute(pts,chosen){
+  const segs=[];let km=0,min=0,fare=0,fareUnknown=false;
+  for(let i=0;i<pts.length-1;i++){
+    if(pts[i+1].noLoc){const o={k:'none',m:0,fare:0,d:'',n:''};segs.push({d:0,rk:0,opts:[o],o});continue}
+    const r=recommend(pts[i],pts[i+1]);
+    let o=r.opts.find(x=>x.k===chosen[i])||r.opts[0];
+    segs.push({...r,o});
+    km+=r.rk; min+=o.m; if(o.fare!=null) fare+=o.fare; else if(o.k!=='walk'&&o.k!=='car') fareUnknown=true;
+  }
+  return {segs,km,min,fare,fareUnknown};
+}
+function segHTML(seg,a,b,ctxAttr){
+  const o=seg.o, M=MODES[o.k];
+  return `<div class="seg">
+    <div class="main"><span class="badge" style="background:${MODE_HEX[o.k]}">${M.i} ${M.l}</span>
+      <b>${fmtKm(seg.rk)}</b><span class="muted">(직선 ${fmtKm(seg.d)})</span>
+      <span>· 약 ${fmtMin(o.m)}</span>${o.fare!=null?`<span>· ${o.k==='tour'?'투어 요금 포함':o.fare?'약 '+yen(o.fare):'무료'}</span>`:''}
+      <a href="${gmapsDir(a,b,o.k)}" target="_blank" rel="noopener" style="font-size:12px;margin-left:auto">구글맵 길찾기 ↗</a></div>
+    <div class="detail">${esc(o.d)}</div>${o.n?`<div class="note">💡 ${esc(o.n)}</div>`:''}
+    ${seg.opts.length>1?`<div class="alts">${seg.opts.map(x=>`<button class="alt ${x===o?'on':''}" ${ctxAttr} data-mode="${x.k}">${MODES[x.k].i} ${MODES[x.k].l} · ${fmtMin(x.m)}${x.fare!=null&&x.fare?' · '+yen(x.fare):''}</button>`).join('')}</div>`:''}
+  </div>`;
+}
+function statsHTML(rt){
+  return `<div class="stats"><div class="stat"><b>${rt.km?fmtKm(rt.km):'0km'}</b><span>예상 이동거리</span></div>
+  <div class="stat"><b>${fmtMin(rt.min)}</b><span>예상 이동시간</span></div>
+  <div class="stat"><b>${yen(rt.fare)}${rt.fareUnknown?'+':''}</b><span>예상 교통비${rt.fareUnknown?' (일부 제외)':''}</span></div></div>`;
+}
+
+/* =========================================================
+   8. 탭: 일정·동선 (시간별 일정 + 항공편 연동)
+   ========================================================= */
+const CAT_ICON={관광:'📸',맛집:'🍜',쇼핑:'🛍',온천:'♨️',교통:'🚉',숙소:'🏨','내 장소':'📍',카페:'☕',활동:'✨',식사:'🍽',투어:'🚐',휴식:'🛋',체크인:'🔑',기타:'📝'};
+const NOTE_TYPES=['활동','식사','투어','체크인','휴식','쇼핑','기타'];
+const DEFAULT_STAY={관광:60,맛집:60,쇼핑:90,온천:120,교통:10,숙소:0,'내 장소':60,카페:45,활동:60,식사:60,투어:300,휴식:30,체크인:20,기타:30};
+const STAY_OPTS=[0,15,30,45,60,90,120,150,180,240,300,360,480,600];
+const AIRPORT=PLACES.find(p=>p.id==='airport');
+function tm(s){if(!s)return null;const m=/^(\d{1,2}):(\d{2})/.exec(s);return m?(+m[1])*60+(+m[2]):null}
+function hm(m){if(m==null)return '--:--';m=Math.round(m);const over=m>=1440;m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0')+(over?'(+1)':'')}
+function stayLabel(m){return m===0?'잠깐 들름':fmtMin(m)}
+function flightDay(f,fallback){
+  if(f&&f.date&&state.settings.start){const n=Math.round((new Date(f.date)-new Date(state.settings.start))/864e5)+1;return n}
+  return fallback;
+}
+function dayItems(day){
+  const st=state.settings, list=stopsOf(day);
+  const items=list.map(s=>{
+    const base={stop:s,time:s.time||'',stay:(s.stay!==undefined&&s.stay!=='')?Number(s.stay):(DEFAULT_STAY[s.cat]??60),modeNext:s.modeNext};
+    if(s.lat==null||s.lat===''){return {...base,name:s.name,noLoc:true,lat:null,lng:null}}
+    return {...placeOfStop(s),...base};
+  });
+  const fo=st.flightOut||{}, fi=st.flightIn||{};
+  if(fo.arr&&flightDay(fo,1)===day) items.unshift({...AIRPORT,name:'신치토세 공항 도착'+(fo.no?' · '+fo.no:''),virtual:'arr',time:fo.arr,stay:60,modeNext:st.arrMode||''});
+  if(fi.dep&&flightDay(fi,dayCount())===day) items.push({...AIRPORT,name:'신치토세 공항 출발'+(fi.no?' · '+fi.no:''),virtual:'dep',dep:fi.dep,time:'',stay:0});
+  // 장소 없는 일정은 바로 앞(없으면 뒤) 장소 위치를 빌려 씀
+  let last=null; for(const it of items){ if(it.noLoc){ if(last){it.lat=last.lat;it.lng=last.lng;it.area=last.area} } else last=it; }
+  let next=null; for(let i=items.length-1;i>=0;i--){const it=items[i]; if(it.noLoc&&it.lat==null){ if(next){it.lat=next.lat;it.lng=next.lng;it.area=next.area} } else if(!it.noLoc) next=it; }
+  return items.filter(it=>it.lat!=null||it.noLoc).map(it=>it.lat==null?{...it,lat:AIRPORT.lat,lng:AIRPORT.lng,area:'airport',ghost:true}:it);
+}
+function computeSchedule(items){
+  const rt=computeRoute(items,items.map(x=>x.modeNext));
+  let cursor=null;
+  const rows=items.map((it,i)=>{
+    const travel=i>0?rt.segs[i-1].o.m:0;
+    const leave=cursor;
+    const est=cursor!=null?cursor+travel:null;
+    const r={arrive:null,depart:null,fixed:false,late:0,wait:0,guess:false,leave,est};
+    const ft=tm(it.time);
+    if(it.virtual==='dep'){
+      r.deadline=tm(it.dep)-120; r.arrive=est; r.depart=tm(it.dep);
+      if(est!=null&&est>r.deadline) r.late=est-r.deadline;
+      if(est!=null&&est<r.deadline) r.wait=r.deadline-est;
+      return r;
+    }
+    if(ft!=null){
+      r.arrive=ft; r.fixed=true;
+      if(est!=null&&est>ft) r.late=est-ft;
+      if(est!=null&&est<ft) r.wait=ft-est;
+    } else if(est!=null){ r.arrive=est; }
+    else if(i===0){ r.arrive=9*60; r.guess=true; }
+    if(r.arrive!=null){ const real=Math.max(r.arrive,est??r.arrive); r.depart=real+it.stay; cursor=r.depart; }
+    return r;
+  });
+  return {rt,rows};
+}
+function timetableSVG(items,sch){
+  const blocks=[];
+  items.forEach((it,i)=>{
+    const r=sch.rows[i];
+    if(i>0&&r.leave!=null&&r.est!=null&&r.est>r.leave) blocks.push({s:r.leave,e:r.est,k:sch.rt.segs[i-1].o.k,label:MODES[sch.rt.segs[i-1].o.k].i+' '+fmtMin(r.est-r.leave),travel:true});
+    if(r.arrive!=null){
+      const s=Math.max(r.arrive,r.est??r.arrive);
+      if(it.virtual==='dep') blocks.push({s:r.est??r.deadline,e:r.depart,label:'✈️ 공항 수속·출발 '+hm(r.depart),air:true});
+      else if(it.virtual==='arr') blocks.push({s:r.arrive,e:r.depart,label:'✈️ 도착 '+hm(r.arrive)+' · 입국·짐 찾기',air:true});
+      else blocks.push({s,e:Math.max(s+10,r.depart),label:(i+1)+'. '+it.name,late:r.late>0});
+    }
+  });
+  if(!blocks.length) return '';
+  const start=Math.floor(Math.min(...blocks.map(b=>b.s))/60)*60, end=Math.ceil(Math.max(...blocks.map(b=>b.e))/60)*60;
+  const PH=46, W=640, L=52, H=(end-start)/60*PH+16;
+  const y=m=>8+(m-start)/60*PH;
+  let g='';
+  for(let h=start;h<=end;h+=60) g+=`<line x1="${L}" x2="${W}" y1="${y(h)}" y2="${y(h)}" stroke="#e3e8f0"/><text x="${L-8}" y="${y(h)+4}" text-anchor="end" font-size="11" fill="#5f6b82">${hm(h)}</text>`;
+  for(const b of blocks){
+    const top=y(b.s),hh=Math.max(4,y(b.e)-top);
+    if(b.travel){
+      g+=`<rect x="${L+10}" y="${top}" width="10" height="${hh}" rx="4" fill="${MODE_HEX[b.k]}"/>${hh>12?`<text x="${L+28}" y="${top+hh/2+4}" font-size="11" fill="${MODE_HEX[b.k]}" font-weight="700">${esc(b.label)}</text>`:''}`;
+    } else {
+      const fill=b.air?'#fde8eb':b.late?'#fff1f2':'#e8eefb', stroke=b.air?'#d7263d':b.late?'#d7263d':'#2a6fdb';
+      g+=`<rect x="${L+130}" y="${top+1}" width="${W-L-136}" height="${hh-2}" rx="8" fill="${fill}" stroke="${stroke}" stroke-width="1.2"/>${hh<13?'':''}<text ${hh<13?'display="none"':''} x="${L+140}" y="${top+Math.min(hh/2+4,18)}" font-size="12" font-weight="700" fill="#14213d">${esc(b.label.length>30?b.label.slice(0,29)+'…':b.label)}${hh>=30?'':''}</text>${hh>=32?`<text x="${L+140}" y="${top+34}" font-size="11" fill="#5f6b82">${hm(b.s)} ~ ${hm(b.e)}</text>`:''}`;
+    }
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block" role="img" aria-label="시간표">${g}</svg>`;
+}
+function viewPlan(){
+  const n=dayCount(); if(state.day>n) state.day=1;
+  const day=state.day, items=dayItems(day), list=stopsOf(day);
+  const sch=computeSchedule(items), rt=sch.rt;
+  const orphan=state.stops.filter(s=>Number(s.day)>n).length;
+  const dayHotels=hotelsForDay(day), allHotels=hotels();
+  const lateCount=sch.rows.filter(r=>r.late>0).length;
+  const noFlight=!(state.settings.flightOut||{}).arr&&!(state.settings.flightIn||{}).dep;
+  const stayOpts=(sel)=>STAY_OPTS.map(m=>`<option value="${m}" ${Number(sel)===m?'selected':''}>${stayLabel(m)}</option>`).join('');
+  return `
+  <div class="card">
+    <div class="chips">${Array.from({length:n},(_,i)=>`<button class="chip ${i+1===day?'on':''}" data-day="${i+1}">${dayLabel(i+1,true)}</button>`).join('')}</div>
+    ${orphan?`<div class="warn">여행 기간 밖의 날짜에 장소 ${orphan}개가 남아 있어요. 설정에서 기간을 늘리면 다시 보여요.</div>`:''}
+    ${noFlight?`<div class="warn">설정 탭에 항공편 시간을 넣으면 첫날 도착 시간과 마지막 날 출발 시간이 일정에 자동으로 들어가요. <button class="btn sm sec" data-tab="setup">항공편 넣기</button></div>`:''}
+    <div class="row" style="justify-content:space-between;margin-top:12px"><h2 style="margin:0">${dayLabel(day)}</h2><div class="row" style="gap:6px"><button class="btn sec sm" data-share-day>💬 이 날 공유</button><button class="btn sm" data-share-all>💬 전체 일정 공유</button></div></div>
+    ${(()=>{const mp=[],mm=[];items.forEach((it,i)=>{if(it.noLoc)return;if(mp.length)mm.push(rt.segs[i-1].o.k==='none'?'walk':rt.segs[i-1].o.k);mp.push(it)});return mapSVG(mp,mm)})()}
+    ${statsHTML(rt)}
+    ${lateCount?`<div class="warn" style="background:#fde8eb;color:#b0172b">⚠️ 시간이 빠듯한 곳이 ${lateCount}곳 있어요. 체류 시간을 줄이거나 순서를 바꿔 보세요.</div>`:''}
+  </div>
+  ${items.length?`<div class="card"><h2>⏱ 시간표</h2>${timetableSVG(items,sch)}
+    <p class="muted" style="margin-bottom:0">시간을 정한 곳은 그 시간에 맞추고, 안 정한 곳은 앞 일정의 체류 시간과 이동시간을 더해 자동으로 계산해요.${sch.rows[0]&&sch.rows[0].guess?' 첫 장소 시간이 없어서 오전 9시 출발로 계산했어요.':''}</p></div>`:''}
+  <div class="card">
+    <div class="row" style="justify-content:space-between"><h2 style="margin:0">동선과 시간</h2>${list.length>1?'<button class="btn sec sm needwrite" data-sort-time>⏱ 시간순 정렬</button>':''}</div>
+    ${items.length?'':`<div class="empty">아직 일정이 없어요. 아래에서 장소를 추가하거나 할 일을 직접 적어 보세요.</div>`}
+    <div class="timeline">${items.map((it,i)=>{
+      const r=sch.rows[i], s=it.stop;
+      const timeLine = it.virtual==='arr'
+        ? `<b>${hm(r.arrive)} 도착</b> · 입국심사·짐 찾기 약 1시간 → <b>${hm(r.depart)}</b>부터 이동`
+        : it.virtual==='dep'
+        ? `출발 <b>${hm(r.depart)}</b> · 국제선은 2시간 전(<b>${hm(r.deadline)}</b>)까지 공항 도착 권장${r.arrive!=null?` · 예상 공항 도착 <b>${hm(r.arrive)}</b>`:''}`
+        : `${r.arrive!=null?`<b>${hm(r.arrive)} ~ ${hm(r.depart)}</b> ${r.fixed?'<span class="tag">시간 지정</span>':'<span class="tag" style="background:#f1f4f9;color:#5f6b82">자동 계산</span>'}`:'시간 미정'} · ${stayLabel(it.stay)}`;
+      const alert = r.late>0?`<div class="sub" style="color:#b0172b;font-weight:700">⚠️ 이동시간 때문에 약 ${fmtMin(r.late)} 늦어요${it.virtual==='dep'?' — 앞 일정을 줄여 주세요':''}</div>`
+        : r.wait>=20?`<div class="sub" style="color:#1f9d63">☕ 앞 일정 후 약 ${fmtMin(r.wait)} 여유</div>`:'';
+      const head = it.virtual
+        ? `<div class="stop" style="background:#fff7f8;border-color:#f6c9cf"><div class="num" style="background:var(--accent)">✈</div><div class="body"><div class="name">${esc(it.name)}</div><div class="sub">${timeLine}</div>${alert}</div><div class="acts needwrite"><button class="icon" data-tab="setup" title="항공편 수정">✎</button></div></div>`
+        : `<div class="stop"><div class="num">${list.indexOf(s)+1}</div><div class="body">
+          <div class="name">${CAT_ICON[s.cat]||'📍'} ${esc(s.name)}${s.kind==='note'?' <span class="tag" style="background:#f3eefe;color:#5b3fb0">✏️ 직접 입력</span>':''}</div>
+          ${s.kind==='note'?`<div class="sub">${s.placeName?'📍 '+esc(s.placeName):'장소 지정 안 함 (앞 일정 위치 기준)'}</div>`:''}
+          <div class="sub">${timeLine}${s.memo?' · '+esc(s.memo):''}</div>${alert}
+          <div class="row needwrite" style="margin-top:6px;gap:6px"><input type="time" data-stop-time="${s.id}" value="${esc(s.time||'')}" style="width:120px;padding:5px 8px" title="도착 시간 지정 (비워두면 자동)"><select data-stop-stay="${s.id}" style="width:auto;padding:5px 8px" title="머무는 시간">${stayOpts(it.stay)}</select>${s.time?`<button class="btn sec sm" data-stop-clear-time="${s.id}">자동으로</button>`:''}</div></div>
+          <div class="acts needwrite"><button class="icon" data-mv="${s.id}" data-dir="-1" ${list.indexOf(s)===0?'disabled':''} title="위로">↑</button><button class="icon" data-mv="${s.id}" data-dir="1" ${list.indexOf(s)===list.length-1?'disabled':''} title="아래로">↓</button><button class="icon" data-edit-stop="${s.id}" title="수정">✎</button><button class="icon" data-del-stop="${s.id}" title="삭제">🗑</button></div></div>`;
+      const segAttr = it.virtual==='arr'?'data-seg-arr="1"':(s?`data-seg-stop="${s.id}"`:'');
+      const nx=items[i+1];
+      return head + (nx&&!nx.noLoc&&!(it.noLoc&&rt.segs[i].rk<0.05)?segHTML(rt.segs[i],it,nx,segAttr):(nx?'<div class="seg" style="padding:4px 0 4px 20px"></div>':''));
+    }).join('')}</div>
+  </div>
+  <div class="card needwrite">
+    <div class="chips" style="margin-bottom:10px"><button class="chip ${state.addMode!=='note'?'on':''}" data-add-mode="place">📍 장소 추가</button><button class="chip ${state.addMode==='note'?'on':''}" data-add-mode="note">✏️ 일정 직접 입력</button></div>
+    ${state.addMode==='note'?`
+    <div class="grid2">
+      <div class="field"><label>할 일 (필수)</label><input type="text" id="noteTitle" placeholder="예: 비에이 투어 집합, 호텔 체크인, 저녁 수프카레"></div>
+      <div class="field"><label>종류</label><select id="noteType">${NOTE_TYPES.map(t=>`<option value="${t}">${CAT_ICON[t]} ${t}</option>`).join('')}</select></div>
+      <div class="field"><label>시작 시간 (비우면 자동)</label><input type="time" id="noteTime"></div>
+      <div class="field"><label>걸리는 시간</label><select id="noteStay"><option value="">자동</option>${STAY_OPTS.map(m=>`<option value="${m}">${stayLabel(m)}</option>`).join('')}</select></div>
+    </div>
+    <div class="field"><label>장소 (선택 · 검색하거나 구글맵 링크 붙여넣기)</label>${pickerHTML('note','장소가 있으면 검색 (없어도 돼요)')}</div>
+    <div class="field"><label>메모</label><input type="text" id="noteMemo" placeholder="예약 번호, 준비물, 집합 장소 설명 등"></div>
+    <div class="row"><button class="btn" data-add-note>일정 추가</button></div>
+    <div class="muted" style="margin-top:6px">장소를 비워두면 지도에는 표시되지 않고, 바로 앞 일정이 있는 곳에서 하는 일로 계산해요. 투어처럼 버스로 이동하는 구간은 구간 선택에서 “🚐 투어 버스”를 고르면 돼요.</div>
+    `:`
+    ${pickerHTML('plan')}
+    <div class="row" style="margin-top:8px"><div style="width:130px"><input type="time" id="planTime" title="도착 시간 (비워두면 자동 계산)"></div><select id="planStay" style="width:auto" title="머무는 시간"><option value="">체류: 자동</option>${STAY_OPTS.map(m=>`<option value="${m}">${stayLabel(m)}</option>`).join('')}</select><input type="text" id="planMemo" class="grow" placeholder="메모 (선택)"><button class="btn" data-add-stop>추가</button></div>
+    <div class="muted" style="margin-top:6px">시간을 비워두면 앞 일정이 끝나는 시간에 이동시간을 더해서 자동으로 채워져요. 체류 시간 기본값은 관광 1시간, 쇼핑 1시간 30분, 온천 2시간이에요.</div>
+    ${allHotels.length?`<div class="row" style="margin-top:8px;gap:6px">${(dayHotels.length?dayHotels:allHotels).map(h=>`<button class="btn sec sm" data-add-hotel="${allHotels.indexOf(h)}">🏨 ${esc(h.name)} 넣기</button>`).join('')}</div>`:`<div class="muted" style="margin-top:8px">설정에서 숙소를 정해두면 버튼 하나로 출발·도착지에 넣을 수 있어요.</div>`}
+    `}
+  </div>
+  <p class="muted">거리는 직선거리에 도로 우회를 더한 추정치이고, 시간과 요금은 대략적인 값이에요. 실제 시간표와 요금은 각 구간의 “구글맵 길찾기”로 확인하세요.</p>`;
+}
+
+/* =========================================================
+   9. 탭: 거리 계산 (빠른 계산기)
+   ========================================================= */
+function viewRoute(){
+  const pts=state.calc;
+  const rt=computeRoute(pts,pts.map(p=>p.modeNext));
+  return `
+  <div class="card">
+    <h2>순서대로 장소 넣고 거리 계산</h2>
+    <p class="muted" style="margin-top:-4px">장소를 이동 순서대로 넣으면 구간별 거리, 예상 시간, 추천 교통수단을 알려드려요. 마음에 드는 동선은 일정에 바로 넣을 수 있어요.</p>
+    ${pickerHTML('calc')}
+    <div class="row" style="margin-top:8px"><button class="btn" data-calc-add>➕ 경로에 추가</button>${pts.length?'<button class="btn red sm" data-calc-clear>전체 지우기</button>':''}</div>
+  </div>
+  ${pts.length?`<div class="card">${mapSVG(pts,rt.segs.map(s=>s.o.k))}${statsHTML(rt)}</div>
+  <div class="card"><h2>구간별 결과</h2><div class="timeline">${pts.map((p,i)=>`
+    <div class="stop"><div class="num">${i+1}</div><div class="body"><div class="name">${esc(p.name)}</div><div class="sub">${esc(AREAS[p.area]||'')}</div></div>
+    <div class="acts"><button class="icon" data-calc-mv="${i}" data-dir="-1" ${i===0?'disabled':''}>↑</button><button class="icon" data-calc-mv="${i}" data-dir="1" ${i===pts.length-1?'disabled':''}>↓</button><button class="icon" data-calc-del="${i}">🗑</button></div></div>
+    ${i<pts.length-1?segHTML(rt.segs[i],p,pts[i+1],`data-seg-calc="${i}"`):''}`).join('')}</div>
+    ${pts.length>1?`<h3>구간 요약표</h3><table><tr><th>구간</th><th class="r">거리</th><th>추천</th><th class="r">시간</th></tr>${rt.segs.map((s,i)=>`<tr><td>${i+1}→${i+2}</td><td class="r">${fmtKm(s.rk)}</td><td>${MODES[s.o.k].i} ${MODES[s.o.k].l}</td><td class="r">${fmtMin(s.o.m)}</td></tr>`).join('')}<tr><td><b>합계</b></td><td class="r"><b>${fmtKm(rt.km)}</b></td><td></td><td class="r"><b>${fmtMin(rt.min)}</b></td></tr></table>`:''}
+    <div class="row needwrite" style="margin-top:12px"><select id="calcDay" style="width:auto">${Array.from({length:dayCount()},(_,i)=>`<option value="${i+1}">${dayLabel(i+1)}</option>`).join('')}</select><button class="btn" data-calc-push>이 동선을 일정에 넣기</button></div>
+  </div>`:`<div class="card empty">첫 번째 장소부터 넣어 보세요. 두 곳 이상이면 계산이 시작돼요.</div>`}`;
+}
+
+/* =========================================================
+   9-1. 탭: 추천 코스
+   ========================================================= */
+// [장소 id, 체류(분), 메모]
+const COURSES=[
+ {id:'arrival',t:'도착일: 삿포로역·오도리·스스키노',tags:['도착일 추천','시내','가볍게'],start:'',d:'공항에서 JR로 삿포로역까지 온 뒤 숙소에 짐을 맡기고 가볍게 도는 코스. 저녁엔 오도리 공원 일루미네이션과 라멘으로 마무리해요.',
+  s:[['sapporo-st',30,'숙소에 짐 맡기기'],['akarenga',30,''],['clock',20,''],['tvtower',40,'전망대'],['odori',40,'11월 말부터 화이트 일루미네이션'],['tanuki',60,'드럭스토어·기념품'],['ramen-yokocho',50,'저녁 라멘']]},
+ {id:'city',t:'삿포로 시내 하루',tags:['하루','시내','야경'],start:'09:00',d:'장외시장 해산물 아침 → 홋카이도 신궁 → 시로이 코이비토 파크 → 모이와야마 야경 → 징기스칸 저녁.',
+  s:[['jogai',60,'해산물 덮밥 아침'],['maruyama',90,'신궁 산책'],['shiroi',90,'과자 공장 견학'],['moiwa',90,'해 질 무렵 야경'],['daruma',75,'징기스칸 저녁']]},
+ {id:'otaru',t:'오타루 하루',tags:['근교','하루','운하'],start:'09:00',d:'JR로 40분. 산카쿠 시장 아침 → 운하 → 사카이마치 거리(르타오·유리공방) → 오르골당 → 덴구야마 야경.',
+  s:[['sapporo-st',10,''],['otaru-st',5,''],['sankaku',45,'해산물 아침'],['otaru-canal',45,''],['sakaimachi',100,'르타오, 기타이치 유리'],['orgel',40,''],['tenguyama',90,'오타루 야경']]},
+ {id:'otaru-nikka',t:'요이치 위스키 + 오타루',tags:['근교','하루','위스키'],start:'09:00',d:'닛카 요이치 증류소 견학(사전 예약 필요)을 먼저 하고, 오는 길에 오타루를 들러요.',
+  s:[['sapporo-st',10,''],['nikka',100,'견학 예약 필수'],['otaru-st',5,''],['otaru-canal',40,''],['sakaimachi',90,''],['orgel',30,'']]},
+ {id:'biei',t:'아사히야마 동물원 + 비에이 청의 호수',tags:['근교','하루','겨울 풍경'],start:'07:30',d:'이동이 길어서 아침 일찍 출발해요. 겨울엔 눈길이라 버스투어를 이용하는 사람이 많아요.',
+  s:[['sapporo-st',10,''],['asahikawa-st',10,''],['asahiyama',120,'펭귄 산책(겨울 시기 확인)'],['biei-st',10,''],['aoiike',40,'겨울 라이트업 시기 확인'],['shirahige',30,'']]},
+ {id:'jozankei',t:'조잔케이 온천 반나절',tags:['온천','반나절'],start:'13:00',d:'삿포로역에서 버스로 1시간 남짓. 당일 입욕 되는 료칸·온천이 많아요.',
+  s:[['sapporo-st',10,'갓파라이너 예약'],['jozankei',180,'당일 온천']]},
+ {id:'noboribetsu',t:'노보리베츠 온천 당일',tags:['온천','하루'],start:'09:00',d:'지옥계곡을 산책하고 온천을 즐기는 하루 코스.',
+  s:[['sapporo-st',10,'고속버스 예약'],['jigokudani',60,''],['noboribetsu',150,'당일 온천']]},
+ {id:'night',t:'저녁 야경·맛집',tags:['저녁','야경','시내'],start:'16:30',d:'모이와야마에서 해 지는 야경을 본 뒤 스스키노에서 징기스칸과 라멘으로 마무리.',
+  s:[['moiwa',90,'로프웨이 + 미니 케이블카'],['susukino',30,''],['daruma',75,''],['ramen-yokocho',40,'2차 라멘']]},
+ {id:'shopping',t:'쇼핑·기념품',tags:['쇼핑','시내'],start:'10:00',d:'삿포로역 백화점, 다누키코지, 팩토리, 그리고 시간이 되면 기타히로시마 아울렛까지.',
+  s:[['sapporo-st',90,'다이마루·스텔라플레이스'],['tanuki',90,''],['factory',60,''],['mitsui-outlet',120,'']]},
+ {id:'leave',t:'출국일 오전 (오후 비행기일 때)',tags:['출국일'],start:'08:30',d:'니조 시장 아침 → 삿포로역 기념품 → 공항으로. 오전 비행기면 바로 공항으로 가세요.',
+  s:[['nijo',50,'해산물 아침'],['sapporo-st',40,'기념품']]},
+];
+const PLAN_PRESET={1:'arrival',2:'otaru',3:'city'};
+function coursePts(c){return c.s.map(([id,stay])=>{const p=PLACES.find(x=>x.id===id);return {...p,stay}})}
+function viewCourse(){
+  const n=dayCount();
+  const dayOpts=sel=>Array.from({length:n},(_,i)=>`<option value="${i+1}" ${i+1===sel?'selected':''}>${dayLabel(i+1)}${stopsOf(i+1).length?` · ${stopsOf(i+1).length}곳`:''}</option>`).join('');
+  const fi=state.settings.flightIn||{};
+  return `
+  <div class="card">
+    <h2>⭐ 우리 일정 맞춤 추천</h2>
+    <p class="muted" style="margin-top:-4px">3박 4일, 첫날 오전 도착 기준이에요. 마지막 날은 ${fi.dep?`${esc(fi.dep)} 출발이라 `:''}공항 이동만 두었어요.</p>
+    <table>${[1,2,3,4].filter(d=>d<=n).map(d=>{const c=COURSES.find(x=>x.id===PLAN_PRESET[d]);return `<tr><td style="white-space:nowrap"><b>${dayLabel(d)}</b></td><td>${c?esc(c.t):'숙소 → 신치토세 공항'}</td></tr>`}).join('')}</table>
+    <div class="row needwrite" style="margin-top:10px"><button class="btn" data-preset-all>이대로 일정 채우기</button><span class="muted">비어 있는 날에만 넣어요</span></div>
+  </div>
+  ${COURSES.map(c=>{
+    const pts=coursePts(c); const rt=computeRoute(pts,[]);
+    const stayTot=c.s.reduce((a,x)=>a+x[1],0);
+    return `<div class="card">
+      <div class="row" style="gap:6px">${c.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+      <h2 style="margin-top:8px">${esc(c.t)}</h2>
+      <p style="margin:0 0 8px">${esc(c.d)}</p>
+      <details><summary class="muted" style="cursor:pointer">지도와 동선 보기 · ${c.s.length}곳 · 이동 ${fmtKm(rt.km)} · 약 ${fmtMin(rt.min+stayTot)}</summary>
+        <div style="margin-top:8px">${mapSVG(pts,rt.segs.map(s=>s.o.k))}</div>
+        <ol style="padding-left:20px;margin:8px 0">${c.s.map(([id,stay,memo],i)=>{const p=PLACES.find(x=>x.id===id);const sg=rt.segs[i];return `<li><b>${esc(p.name)}</b> <span class="muted">${stayLabel(stay)}${memo?' · '+esc(memo):''}</span>${sg?`<div class="muted" style="font-size:12px">↓ ${MODES[sg.o.k].i} ${MODES[sg.o.k].l} ${fmtKm(sg.rk)} · 약 ${fmtMin(sg.o.m)}</div>`:''}</li>`}).join('')}</ol>
+      </details>
+      <div class="row needwrite" style="margin-top:10px"><select data-course-day="${c.id}" style="width:auto">${dayOpts(Math.min(n,2))}</select><button class="btn" data-course-add="${c.id}">일정에 넣기</button></div>
+    </div>`}).join('')}
+  <p class="muted">코스의 이동 시간은 추정치예요. 넣은 뒤 일정 탭에서 순서·시간·체류 시간을 자유롭게 바꿀 수 있어요.</p>`;
+}
+async function addCourse(id,day){
+  const c=COURSES.find(x=>x.id===id); if(!c) return;
+  const hasArrival=(()=>{const fo=state.settings.flightOut||{};return fo.arr&&flightDay(fo,1)===day})();
+  const startEmpty=!stopsOf(day).length;
+  let first=true;
+  for(const [pid,stay,memo] of c.s){
+    const p=PLACES.find(x=>x.id===pid);
+    const time=(first&&startEmpty&&c.start&&!hasArrival)?c.start:'';
+    await addStop(day,p,time,memo,stay);
+    first=false;
+  }
+}
+
+/* =========================================================
+   10. 탭: 가계부
+   ========================================================= */
+const EXP_CATS=['식비','교통','숙소','쇼핑','관광','기타'];
+function settle(){
+  const ms=members(); const bal={}; ms.forEach(m=>bal[m]=0);
+  let total=0;
+  for(const e of state.expenses){
+    const krw=toKRW(Number(e.amount)||0,e.cur,effRate(e)); total+=krw;
+    const split=(e.split&&e.split.length?e.split:ms).filter(x=>ms.includes(x));
+    if(ms.includes(e.paidBy)) bal[e.paidBy]+=krw;
+    const share=split.length?krw/split.length:0;
+    split.forEach(m=>bal[m]-=share);
+  }
+  const cred=Object.entries(bal).filter(([,v])=>v>1).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
+  const debt=Object.entries(bal).filter(([,v])=>v<-1).map(([k,v])=>({k,v:-v})).sort((a,b)=>b.v-a.v);
+  const tx=[];let i=0,j=0;
+  while(i<debt.length&&j<cred.length){
+    const x=Math.min(debt[i].v,cred[j].v);
+    tx.push({from:debt[i].k,to:cred[j].k,amt:x});
+    debt[i].v-=x;cred[j].v-=x;
+    if(debt[i].v<1)i++; if(cred[j].v<1)j++;
+  }
+  return {bal,tx,total};
+}
+function viewMoney(){
+  const ms=members(); const ex=[...state.expenses].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.ts||0)-(a.ts||0));
+  const {bal,tx,total}=settle();
+  const byCat={}; EXP_CATS.forEach(c=>byCat[c]=0);
+  state.expenses.forEach(e=>{byCat[e.cat||'기타']=(byCat[e.cat||'기타']||0)+toKRW(Number(e.amount)||0,e.cur,effRate(e))});
+  const budget=Number(state.settings.budget)||0;
+  const paid={};ms.forEach(m=>paid[m]=0);state.expenses.forEach(e=>{if(paid[e.paidBy]!=null)paid[e.paidBy]+=toKRW(Number(e.amount)||0,e.cur,effRate(e))});
+  const ed=state.editingExpense? state.expenses.find(e=>e.id===state.editingExpense):null;
+  const maxCat=Math.max(1,...Object.values(byCat));
+  return `
+  <div class="card">
+    <h2>여행 경비</h2>
+    <div class="stats"><div class="stat"><b>${won(total)}</b><span>총 지출</span></div><div class="stat"><b>${yen(state.expenses.filter(e=>e.cur!=='KRW').reduce((a,e)=>a+(Number(e.amount)||0),0))}</b><span>엔화로 쓴 돈</span></div><div class="stat"><b>${won(total/ms.length)}</b><span>1인당</span></div></div>
+    ${budget?`<div style="margin-top:12px"><div class="row" style="justify-content:space-between"><span class="muted">예산 ${won(budget)}</span><b style="color:${total>budget?'var(--accent)':'var(--ok)'}">${total>budget?'초과 '+won(total-budget):'남은 예산 '+won(budget-total)}</b></div><div class="bar" style="margin-top:4px"><i style="width:${Math.min(100,total/budget*100)}%;background:${total>budget?'var(--accent)':'var(--ok)'}"></i></div></div>`:''}
+    <div class="muted" style="margin-top:8px">환율 100엔 = ${rate().toLocaleString()}원${state.fx.updatedAt?` · 관리자가 ${fmtAt(state.fx.updatedAt)}에 설정`:''}. 지출마다 입력할 때의 환율로 계산돼요.</div>
+  </div>
+  <div class="card needwrite">
+    <h2>${ed?'지출 수정':'지출 추가'}</h2>
+    <div class="grid2">
+      <div class="field"><label>내용</label><input type="text" id="exTitle" placeholder="예: 스프카레 점심" value="${esc(ed?ed.title:'')}"></div>
+      <div class="field"><label>금액</label><div class="row"><input type="number" id="exAmt" class="grow" inputmode="decimal" placeholder="0" value="${ed?esc(ed.amount):''}"><select id="exCur" style="width:90px"><option value="JPY" ${!ed||ed.cur==='JPY'?'selected':''}>엔 ¥</option><option value="KRW" ${ed&&ed.cur==='KRW'?'selected':''}>원 ₩</option></select></div><div class="muted" id="exConv"></div>
+        ${state.isOwner?`<div class="row" id="exRateRow" style="margin-top:6px;gap:6px"><span class="muted" style="white-space:nowrap">👑 이 지출 환율 100엔 =</span><input type="number" id="exRate" inputmode="decimal" style="width:100px" value="${ed&&ed.cur!=='KRW'?effRate(ed):rate()}"><span class="muted">원</span></div>`:''}</div>
+      <div class="field"><label>분류</label><select id="exCat">${EXP_CATS.map(c=>`<option ${ed&&ed.cat===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>날짜</label><input type="date" id="exDate" value="${esc(ed?ed.date:(dayDate(state.day)||new Date().toISOString().slice(0,10)))}"></div>
+      <div class="field"><label>결제한 사람</label><select id="exPaid">${ms.map(m=>`<option ${ed&&ed.paidBy===m?'selected':''}>${esc(m)}</option>`).join('')}</select></div>
+      <div class="field"><label>나눌 사람</label><div class="row">${ms.map(m=>`<label class="row" style="gap:4px;font-size:14px"><input type="checkbox" class="exSplit" value="${esc(m)}" ${!ed||!ed.split||ed.split.includes(m)?'checked':''}>${esc(m)}</label>`).join('')}</div></div>
+    </div>
+    <div class="row"><button class="btn" data-ex-save>${ed?'수정 저장':'추가'}</button>${ed?'<button class="btn sec" data-ex-cancel>취소</button>':''}</div>
+  </div>
+  ${ms.length>1?`<div class="card"><h2>정산</h2>
+    <table><tr><th>이름</th><th class="r">낸 돈</th><th class="r">받을/줄 돈</th></tr>${ms.map(m=>`<tr><td>${esc(m)}</td><td class="r">${won(paid[m])}</td><td class="r" style="color:${bal[m]>=0?'var(--ok)':'var(--accent)'}">${bal[m]>=0?'+':''}${won(bal[m])}</td></tr>`).join('')}</table>
+    <h3>이렇게 보내면 끝나요</h3>${tx.length?tx.map(t=>`<div class="check"><span class="t"><b>${esc(t.from)}</b> → <b>${esc(t.to)}</b></span><b>${won(t.amt)}</b></div>`).join(''):'<div class="muted">정산할 금액이 없어요 👍</div>'}
+  </div>`:`<div class="card muted">설정에서 동행인 이름을 넣으면 누가 누구에게 얼마를 보내면 되는지 계산해 드려요.</div>`}
+  <div class="card"><h2>분류별</h2>${EXP_CATS.map(c=>`<div style="margin-bottom:8px"><div class="row" style="justify-content:space-between;font-size:14px"><span>${c}</span><span>${won(byCat[c])}</span></div><div class="bar"><i style="width:${byCat[c]/maxCat*100}%"></i></div></div>`).join('')}</div>
+  <div class="card"><h2>지출 내역 <span class="muted">${ex.length}건</span></h2>
+    ${ex.length?`<table><tr><th>날짜</th><th>내용</th><th class="r">금액</th><th></th></tr>${ex.map(e=>`<tr><td class="muted">${esc((e.date||'').slice(5))}</td><td>${esc(e.title)}<div class="muted">${esc(e.cat||'')} · ${esc(e.paidBy||'')} 결제${e.split&&e.split.length&&e.split.length<ms.length?' · '+e.split.map(esc).join(', '):''}</div></td><td class="r"><b>${e.cur==='KRW'?won(e.amount):yen(e.amount)}</b>${e.cur==='KRW'?'':`<div class="muted">${won(toKRW(e.amount,'JPY',effRate(e)))}<br>100엔=${effRate(e).toLocaleString()}원${(state.fx.exRates||{})[e.id]?' 👑':''}</div>${state.isOwner?`<button class="btn sec sm" style="margin-top:4px" data-ex-rate="${e.id}">환율 수정</button>`:''}`}</td><td class="r needwrite" style="white-space:nowrap"><button class="icon" data-ex-edit="${e.id}">✎</button><button class="icon" data-ex-del="${e.id}">🗑</button></td></tr>`).join('')}</table>`:'<div class="empty">아직 지출이 없어요.</div>'}
+  </div>`;
+}
+
+/* =========================================================
+   11. 탭: 체크리스트
+   ========================================================= */
+const CHECK_CATS=['서류·돈','예약','방한 의류','전자기기','세면·상비약','기타'];
+const DEFAULT_CHECK=[
+ ['서류·돈','여권'],['서류·돈','항공권 e-티켓'],['서류·돈','숙소 예약 확인서'],['서류·돈','엔화 현금'],['서류·돈','해외결제 카드·트래블카드'],['서류·돈','Visit Japan Web 등록 (입국·세관 QR)'],['서류·돈','여행자 보험'],
+ ['예약','항공권'],['예약','숙소'],['예약','공항 ↔ 시내 교통 (JR 쾌속 에어포트 지정석 등)'],['예약','근교 투어 (비에이·오타루 등)'],['예약','인기 식당 예약'],
+ ['방한 의류','두꺼운 패딩'],['방한 의류','방수·미끄럼 방지 부츠'],['방한 의류','신발용 아이젠(스파이크)'],['방한 의류','장갑·목도리·모자'],['방한 의류','발열 내의'],['방한 의류','핫팩'],
+ ['전자기기','휴대폰 충전기'],['전자기기','보조배터리 (기내 반입만 가능)'],['전자기기','돼지코 (일본 A타입 플러그)'],['전자기기','eSIM·포켓 와이파이'],
+ ['세면·상비약','상비약 (소화제·감기약·진통제)'],['세면·상비약','립밤·핸드크림 (건조함 대비)'],['세면·상비약','렌즈·안경'],
+];
+function viewCheck(){
+  const items=state.checklist; const done=items.filter(i=>i.done).length;
+  const cats=[...new Set([...CHECK_CATS,...items.map(i=>i.cat||'기타')])];
+  return `
+  <div class="card">
+    <h2>준비물·할 일</h2>
+    <div class="row" style="justify-content:space-between"><span class="muted">${done} / ${items.length} 완료</span><b>${items.length?Math.round(done/items.length*100):0}%</b></div>
+    <div class="bar" style="margin-top:4px"><i style="width:${items.length?done/items.length*100:0}%;background:var(--ok)"></i></div>
+    ${items.length?'':`<div class="empty needwrite">비어 있어요. 삿포로 겨울 여행 기본 목록으로 시작해 볼까요?<div style="margin-top:10px"><button class="btn" data-check-defaults>기본 체크리스트 불러오기</button></div></div>`}
+  </div>
+  <div class="card needwrite"><div class="row"><input type="text" id="ckText" class="grow" placeholder="항목 추가 (예: 비에이 투어 예약)"><select id="ckCat" style="width:auto">${CHECK_CATS.map(c=>`<option>${c}</option>`).join('')}</select><select id="ckWho" style="width:auto"><option value="">담당 없음</option>${members().map(m=>`<option>${esc(m)}</option>`).join('')}</select><button class="btn" data-check-add>추가</button></div></div>
+  ${cats.map(c=>{const list=items.filter(i=>(i.cat||'기타')===c).sort((a,b)=>(a.order||0)-(b.order||0));if(!list.length)return'';
+    return `<div class="card"><h2>${esc(c)} <span class="muted">${list.filter(i=>i.done).length}/${list.length}</span></h2>${list.map(i=>`<label class="check ${i.done?'done':''}"><input type="checkbox" data-ck="${i.id}" ${i.done?'checked':''} ${state.readOnly?'disabled':''}><span class="t">${esc(i.text)}</span>${i.who?`<span class="tag">${esc(i.who)}</span>`:''}<button class="icon needwrite" data-ck-del="${i.id}" title="삭제">✕</button></label>`).join('')}</div>`}).join('')}`;
+}
+
+/* =========================================================
+   12. 탭: 삿포로 정보
+   ========================================================= */
+const CLIMATE=[[-0.4,-6.4],[0.4,-6.0],[4.5,-2.4],[11.7,3.3],[17.6,8.6],[21.7,13.2],[25.3,17.3],[26.4,18.6],[22.7,14.3],[16.3,7.6],[8.8,1.5],[2.1,-3.8]];
+function viewInfo(){
+  const s=state.settings.start; const tm=s?Number(s.slice(5,7)):new Date().getMonth()+1;
+  const now=new Date(); const fmt=tz=>now.toLocaleTimeString('ko-KR',{timeZone:tz,hour:'2-digit',minute:'2-digit'});
+  return `
+  <div class="card"><h2>🕐 시차</h2>
+    <div class="grid2"><div class="stat"><b>${fmt('Asia/Seoul')}</b><span>서울</span></div><div class="stat"><b>${fmt('Asia/Tokyo')}</b><span>삿포로</span></div></div>
+    <p class="muted">한국과 시차가 없어요. 시계를 맞출 필요가 없어요.</p></div>
+  <div class="card"><h2>💱 환율 계산기</h2>
+    <div class="grid2"><div class="field"><label>엔화 (¥)</label><input type="number" id="fxJ" inputmode="decimal" placeholder="1000"></div><div class="field"><label>원화 (₩)</label><input type="number" id="fxK" inputmode="decimal" placeholder="${Math.round(10*rate())}"></div></div>
+    <div class="row" style="flex-wrap:wrap;gap:6px">${[500,1000,3000,5000,10000].map(v=>`<span class="tag">${yen(v)} = ${won(v*rate()/100)}</span>`).join('')}</div>
+    <p class="muted">기준: 100엔 = ${rate().toLocaleString()}원. 실제 환전·카드 결제 환율과 수수료는 달라요. 환율은 관리자가 설정 탭에서 바꿔요.</p></div>
+  <div class="card"><h2>🌨 날씨 (월평균 기온)</h2>
+    <table class="clim"><tr>${CLIMATE.map((_,i)=>`<th style="text-align:center">${i+1}월</th>`).join('')}</tr>
+    <tr class="">${CLIMATE.map((c,i)=>`<td style="${i+1===tm?'background:#fff4e5;font-weight:700':''}">${Math.round(c[0])}°</td>`).join('')}</tr>
+    <tr>${CLIMATE.map((c,i)=>`<td style="color:#2a6fdb;${i+1===tm?'background:#fff4e5;font-weight:700':''}">${Math.round(c[1])}°</td>`).join('')}</tr></table>
+    <p class="muted">윗줄 평균 최고, 아랫줄 평균 최저 기온 (삿포로 평년값 기준 대략치). ${tm}월 평균은 최고 ${Math.round(CLIMATE[tm-1][0])}°, 최저 ${Math.round(CLIMATE[tm-1][1])}°예요.</p>
+    ${tm>=11||tm<=3?'<div class="warn">눈이 오거나 길이 얼어 있는 시기예요. 미끄럼 방지 신발과 장갑·모자를 챙기고, 걷는 시간은 넉넉하게 잡으세요.</div>':''}
+    <p>실시간 예보: <a href="https://tenki.jp/forecast/1/2/1400/1100/" target="_blank" rel="noopener">tenki.jp 삿포로 ↗</a> · <a href="https://www.google.com/search?q=%EC%82%BF%ED%8F%AC%EB%A1%9C+%EB%82%A0%EC%94%A8" target="_blank" rel="noopener">구글 날씨 ↗</a></p></div>
+  <div class="card"><h2>🚇 교통 기본</h2><div class="kv">
+    <b>지하철</b><span>난보쿠선(초록)·도자이선(주황)·도호선(파랑) 3개 노선. 세 노선 모두 오도리역에서 만나요.</span>
+    <b>노면전차</b><span>스스키노 ↔ 모이와야마 로프웨이 쪽을 도는 순환선. 요금이 균일해요.</span>
+    <b>교통카드</b><span>Kitaca, Suica 같은 IC카드로 지하철·전차·버스·JR을 탈 수 있어요.</span>
+    <b>공항</b><span>신치토세 공항 ↔ 삿포로역은 JR 쾌속 에어포트로 약 40분.</span>
+    <b>근교</b><span>오타루는 JR로 약 40분, 비에이·후라노는 2시간 이상이라 겨울엔 투어버스도 많이 이용해요.</span></div></div>
+  <div class="card"><h2>🔌 생활 정보</h2><div class="kv">
+    <b>전압·플러그</b><span>100V, A타입(납작한 11자). 돼지코가 필요하고, 휴대폰·노트북 충전기는 대부분 그대로 쓸 수 있어요.</span>
+    <b>팁</b><span>팁 문화가 없어요.</span>
+    <b>면세</b><span>여권을 들고 가야 면세를 받을 수 있어요. 매장마다 방식이 다르니 계산할 때 물어보세요.</span>
+    <b>11월 이후</b><span>오도리 공원 화이트 일루미네이션, 뮌헨 크리스마스 시장 같은 겨울 행사가 열려요. 해마다 일정이 달라서 공식 사이트에서 확인하세요.</span></div></div>
+  <div class="card"><h2>🆘 긴급 연락처</h2><div class="kv">
+    <b>경찰</b><span>110</span><b>구급·소방</b><span>119</span>
+    <b>주삿포로 총영사관</b><span>+81-11-218-0288 (출발 전 다시 확인하세요)</span>
+    <b>영사콜센터</b><span>+82-2-3210-0404 (24시간)</span></div></div>
+  <div class="card"><h2>🗣 쓸 만한 일본어</h2><table>
+    ${[['안녕하세요','곤니치와','こんにちは'],['감사합니다','아리가토 고자이마스','ありがとうございます'],['이거 주세요','고레 쿠다사이','これください'],['얼마예요?','이쿠라 데스카','いくらですか'],['화장실은 어디예요?','토이레와 도코 데스카','トイレはどこですか'],['카드 되나요?','카도 츠카에마스카','カード使えますか'],['○○역까지 가 주세요','○○에키마데 오네가이시마스','○○駅までお願いします']].map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b><div class="muted">${r[2]}</div></td></tr>`).join('')}</table></div>`;
+}
+
+/* =========================================================
+   13. 탭: 설정
+   ========================================================= */
+function viewSettings(){
+  const st=state.settings;
+  return `
+  <div class="card"><h2>여행 정보</h2>
+    <div class="field"><label>여행 이름</label><input type="text" data-set="name" value="${esc(st.name||'')}" placeholder="삿포로 여행"></div>
+    <div class="grid2"><div class="field"><label>출발일</label><input type="date" data-set="start" value="${esc(st.start||'')}"></div><div class="field"><label>귀국일</label><input type="date" data-set="end" value="${esc(st.end||'')}"></div></div>
+    <div class="field"><label>동행인 (쉼표로 구분, 나 포함)</label><input type="text" data-set="members" value="${esc(st.members||'')}" placeholder="민진, 친구1, 친구2"></div>
+    <div class="grid2"><div class="field"><label>총 예산 (원)</label><input type="number" data-set="budget" value="${esc(st.budget||'')}" placeholder="예: 1500000"></div></div>
+  </div>
+  <div class="card"><h2>💱 환율 ${state.isOwner?'<span class="tag">👑 관리자</span>':''}</h2>
+    <div class="stat" style="text-align:left"><b>100엔 = ${rate().toLocaleString()}원</b><span>${state.fx.updatedAt?fmtAt(state.fx.updatedAt)+' 업데이트':'기본값 (아직 설정 안 함)'}</span></div>
+    ${state.isOwner?`<div class="row" style="margin-top:10px"><input type="number" id="fxRate" class="grow" inputmode="decimal" placeholder="오늘 환율 (예: ${rate()})"><button class="btn" data-fx-save>환율 적용</button></div>
+    <div class="muted" style="margin-top:6px">새로 적는 지출부터 이 환율로 계산되고, 이미 적은 지출은 입력할 때의 환율이 그대로 유지돼요. <a href="https://search.naver.com/search.naver?query=%EC%97%94%ED%99%94+%ED%99%98%EC%9C%A8" target="_blank" rel="noopener">네이버 엔화 환율 보기 ↗</a></div>
+    ${(state.fx.history||[]).length?`<h3>변경 기록</h3><table>${state.fx.history.slice(0,6).map(h=>`<tr><td class="muted">${fmtAt(h.at)}</td><td class="r"><b>${Number(h.rate).toLocaleString()}원</b></td></tr>`).join('')}</table>`:''}`
+    :`<div class="muted" style="margin-top:8px">환율은 관리자만 바꿀 수 있어요.</div>`}
+  </div>
+  <div class="card"><h2>✈️ 항공편</h2>
+    <p class="muted" style="margin-top:-4px">편명만 넣으면 출발 공항과 시간이 자동으로 채워져요. 도착 시간은 첫날 일정의 시작점으로, 출발 시간은 마지막 날 공항 도착 마감(출발 2시간 전)으로 연결돼요. 동행인도 같이 고칠 수 있어요.</p>
+    ${flightForm('flightOut')}
+    ${flightForm('flightIn')}
+    <div class="muted">자동 입력은 2026년 겨울 인천·청주 ↔ 신치토세 시간표 기준이에요. 가는 편: ${Object.keys(FLIGHT_TABLE).filter(x=>FLIGHT_TABLE[x].dir==='flightOut').join(', ')} / 오는 편: ${Object.keys(FLIGHT_TABLE).filter(x=>FLIGHT_TABLE[x].dir==='flightIn').join(', ')}. 항공사 사정으로 바뀔 수 있으니 예약 확인서와 한 번 맞춰 보세요. 목록에 없는 편명은 시간을 직접 넣으면 돼요.</div>
+  </div>
+  <div class="card"><h2>🌐 누구나 보는 공개 링크</h2>
+    <p style="margin-top:0">Claude를 안 쓰는 사람도 카톡으로 받은 링크만 누르면 일정·지도·체크리스트를 앱처럼 볼 수 있어요. 가계부와 설정은 보이지 않아요.</p>
+    <div class="row"><input type="text" readonly value="${PUBLIC_URL}" class="grow" id="publicUrl" onclick="this.select()"><button class="btn sec" data-copy-public>링크 복사</button></div>
+    ${state.isOwner?`<div class="row" style="margin-top:8px"><button class="btn" data-publish-public>🌐 공개 링크 업데이트</button><span class="muted">${state.settings.publicAt?fmtAt(state.settings.publicAt)+' 업데이트':''}</span></div>`:''}
+    <div class="muted" style="margin-top:6px">공개 링크는 일정을 바꿀 때마다 자동으로 바뀌지 않아요. 일정을 고친 뒤 위 버튼을 누르거나, Claude 채팅에서 “공개 링크 업데이트해줘”라고 하면 반영돼요.</div>
+  </div>
+  <div class="card"><h2>🔗 동행인 초대</h2>
+    <div class="row"><input type="text" readonly value="${PAGE_URL}" class="grow" id="inviteUrl" onclick="this.select()"><button class="btn" data-copy-invite>링크 복사</button></div>
+    <ol class="muted" style="padding-left:18px;margin:10px 0 0">
+      <li>이 페이지 오른쪽 위의 <b>공유</b>를 눌러요.</li>
+      <li>동행인의 <b>이메일로 초대</b>하고 권한을 <b>편집</b>으로 골라요. 링크만 공개로 열면 동행인은 보기만 할 수 있어요.</li>
+      <li>위 링크를 카톡 등으로 보내면, 동행인이 Claude 계정으로 로그인해서 열어요.</li>
+    </ol>
+  </div>
+  <div class="card needwrite"><h2>🏨 숙소</h2>
+    ${hotels().map((h,i)=>`<div class="check" style="flex-wrap:wrap"><span class="t">🏨 <b>${esc(h.name)}</b></span>
+      <select data-hotel-from="${i}" style="width:auto;padding:5px 8px">${Array.from({length:dayCount()},(_,k)=>`<option value="${k+1}" ${Number(h.from||1)===k+1?'selected':''}>${dayLabel(k+1)} 체크인</option>`).join('')}</select>
+      <select data-hotel-to="${i}" style="width:auto;padding:5px 8px">${Array.from({length:dayCount()},(_,k)=>`<option value="${k+1}" ${Number(h.to||dayCount())===k+1?'selected':''}>${dayLabel(k+1)} 체크아웃</option>`).join('')}</select>
+      <button class="icon" data-hotel-del="${i}" title="삭제">✕</button></div>`).join('')}
+    <div style="margin-top:10px">${pickerHTML('hotel','숙소 검색 또는 구글맵 링크 붙여넣기')}</div>
+    <div class="row" style="margin-top:8px"><button class="btn" data-hotel-save>숙소 추가</button><span class="muted">숙소를 여러 곳 넣고 체크인·체크아웃 날짜를 정하면, 일정 탭에서 그날 묵는 숙소가 먼저 보여요.</span></div>
+  </div>
+  <div class="card"><h2>👥 동행인과 같이 쓰기</h2>
+    <p style="margin-top:0">이 페이지를 공유하면 일정, 가계부, 체크리스트가 모두에게 똑같이 보이고, 누가 고치든 바로 반영돼요.</p>
+    <ol style="padding-left:18px;margin:0" class="muted"><li>페이지 오른쪽 위의 <b>공유</b>를 눌러요.</li><li>동행인을 초대할 때 <b>편집 가능한 권한</b>(Contributor 이상)을 줘요. 보기 권한만 주면 읽기만 할 수 있어요.</li></ol>
+    <p class="muted">현재 상태: <b>${state.mode==='cloud'?(state.readOnly?'보기 전용':'공유 저장 중'):'이 기기에만 저장 중'}</b></p>
+  </div>
+  <p class="muted" style="text-align:center">페이지 버전 2026.11.17-9</p>
+  ${state.places.length?`<div class="card"><h2>📍 직접 추가한 장소</h2>${state.places.map(p=>`<div class="check"><span class="t">${esc(p.name)} <span class="muted">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></span><button class="icon needwrite" data-place-del="${p.id}">✕</button></div>`).join('')}</div>`:''}`;
+}
+
+
+/* 항공편: 2026년 11월 인천 ↔ 신치토세 시간표 (NAVITIME 기준) */
+const PAGE_URL='https://claude.ai/artifact/Gc3abrqPSJz4eKtqerP7ew';
+const AIRLINES={RF:'에어로케이',KE:'대한항공',OZ:'아시아나항공',LJ:'진에어',TW:'티웨이항공','7C':'제주항공',ZE:'이스타항공',BX:'에어부산',RS:'에어서울',MM:'피치항공',YP:'에어프레미아',WE:'타이항공'};
+const FLIGHT_TABLE={
+  ZE621:{dir:'flightOut',from:'인천(ICN)',dep:'07:40',arr:'10:20'}, OZ174:{dir:'flightOut',from:'인천(ICN)',dep:'08:00',arr:'10:45'},
+  LJ203:{dir:'flightOut',from:'인천(ICN)',dep:'08:30',arr:'11:15'}, ZE625:{dir:'flightOut',from:'인천(ICN)',dep:'09:10',arr:'11:40'},
+  KE765:{dir:'flightOut',from:'인천(ICN)',dep:'10:05',arr:'12:50'}, TW263:{dir:'flightOut',from:'인천(ICN)',dep:'10:20',arr:'13:10'},
+  '7C1503':{dir:'flightOut',from:'인천(ICN)',dep:'12:25',arr:'15:00'}, KE769:{dir:'flightOut',from:'인천(ICN)',dep:'13:00',arr:'15:45'},
+  ZE623:{dir:'flightOut',from:'인천(ICN)',dep:'14:35',arr:'17:05'},
+  ZE622:{dir:'flightIn',to:'인천(ICN)',dep:'11:20',arr:'14:35'}, OZ173:{dir:'flightIn',to:'인천(ICN)',dep:'12:00',arr:'15:20'},
+  LJ204:{dir:'flightIn',to:'인천(ICN)',dep:'12:15',arr:'15:30'}, ZE626:{dir:'flightIn',to:'인천(ICN)',dep:'13:00',arr:'16:00'},
+  KE766:{dir:'flightIn',to:'인천(ICN)',dep:'14:15',arr:'17:30'}, TW264:{dir:'flightIn',to:'인천(ICN)',dep:'14:40',arr:'18:10'},
+  '7C1504':{dir:'flightIn',to:'인천(ICN)',dep:'16:00',arr:'19:25'}, KE770:{dir:'flightIn',to:'인천(ICN)',dep:'16:55',arr:'20:10'},
+  ZE624:{dir:'flightIn',to:'인천(ICN)',dep:'18:05',arr:'21:20'},
+  RF352:{dir:'flightOut',from:'청주(CJJ)',dep:'07:50',arr:'10:30'},
+  RF356:{dir:'flightOut',from:'청주(CJJ)',dep:'13:30',arr:'',note:'11/27~3/2 추가편이에요. 도착 시간은 예약 확인서를 보고 직접 넣어 주세요.'},
+  RF351:{dir:'flightIn',to:'청주(CJJ)',dep:'11:30',arr:'14:45'},
+  RF355:{dir:'flightIn',to:'청주(CJJ)',dep:'',arr:'',note:'겨울 추가편이라 시간을 확인하지 못했어요. 예약 확인서를 보고 출발·도착 시간을 직접 넣어 주세요.'},
+};
+const KR_AIRPORTS=['인천(ICN)','김포(GMP)','김해·부산(PUS)','대구(TAE)','청주(CJJ)','제주(CJU)','무안(MWX)'];
+function normFlight(v){return String(v||'').toUpperCase().replace(/[\s-]/g,'')}
+function airlineOf(no){const m=/^([A-Z0-9]{2})/.exec(no);return m?(AIRLINES[m[1]]||''):''}
+function flightForm(k){
+  const st=state.settings, f=st[k]||{}, out=k==='flightOut';
+  const kr=out?(f.from||'인천(ICN)'):(f.to||'인천(ICN)');
+  const krSel=`<select data-fl="${k}.${out?'from':'to'}">${KR_AIRPORTS.map(a=>`<option ${a===kr?'selected':''}>${a}</option>`).join('')}</select>`;
+  const hit=f.no?FLIGHT_TABLE[f.no]:null;
+  const wrongDir=hit&&hit.dir!==k;
+  const filled=hit&&!wrongDir&&f.dep===hit.dep&&f.arr===hit.arr;
+  const status=!f.no?'':
+    wrongDir?`<div class="warn">${esc(f.no)}은(는) ${out?'신치토세 → 한국':'한국 → 신치토세'} 편이에요. ${out?'오는 편':'가는 편'} 칸에 넣어 주세요.</div>`:
+    hit&&filled?`<div class="picked"><span>✅ ${esc(airlineOf(f.no))} ${esc(f.no)} · ${out?`${esc(kr)} ${esc(f.dep||'')} 출발 → 신치토세 ${esc(f.arr||'--:--')} 도착`:`신치토세 ${esc(f.dep||'--:--')} 출발 → ${esc(kr)} ${esc(f.arr||'')} 도착`} (자동 입력)</span></div>${hit.note?`<div class="warn">${esc(hit.note)}</div>`:''}`:
+    hit?`<div class="warn">${esc(f.no)} 시간표: ${out?esc(hit.from||''):'신치토세'} ${esc(hit.dep||'?')} 출발 → ${out?'신치토세':esc(hit.to||'')} ${esc(hit.arr||'?')} 도착. 지금 칸의 시간과 달라요. <button class="btn sm" data-fl-fill="${k}">시간표대로 채우기</button></div>${hit.note?`<div class="warn">${esc(hit.note)}</div>`:''}`:
+    `<div class="warn">${esc(f.no)}은(는) 자동 목록에 없어요. 아래에 시간을 직접 넣어 주세요. <a href="https://www.google.com/search?q=${encodeURIComponent(f.no+' 항공편 시간')}" target="_blank" rel="noopener">${esc(f.no)} 시간 검색 ↗</a></div>`;
+  return `<h3>${out?'가는 편 (한국 → 신치토세)':'오는 편 (신치토세 → 한국)'}</h3>
+    <div class="grid2"><div class="field"><label>편명</label><input type="text" data-fl="${k}.no" value="${esc(f.no||'')}" placeholder="${out?'예: KE765':'예: KE766'}" autocapitalize="characters"></div>
+    <div class="field"><label>날짜</label><input type="date" data-fl="${k}.date" value="${esc(f.date||(out?st.start:st.end)||'')}"></div></div>
+    ${status}
+    <div class="grid2" style="margin-top:8px">${out
+      ?`<div class="field"><label>출발 공항</label>${krSel}</div><div class="field"><label>한국 출발 시간</label><input type="time" data-fl="${k}.dep" value="${esc(f.dep||'')}"></div><div class="field"><label>신치토세 도착 시간</label><input type="time" data-fl="${k}.arr" value="${esc(f.arr||'')}"></div>`
+      :`<div class="field"><label>도착 공항</label>${krSel}</div><div class="field"><label>신치토세 출발 시간</label><input type="time" data-fl="${k}.dep" value="${esc(f.dep||'')}"></div><div class="field"><label>한국 도착 시간</label><input type="time" data-fl="${k}.arr" value="${esc(f.arr||'')}"></div>`}</div>`;
+}
+
+let lastFlightApplied={}; const flTimers={};
+async function applyFlightNo(k,raw,final){
+  const no=normFlight(raw); const cur={...(state.settings[k]||{})};
+  const hit=FLIGHT_TABLE[no];
+  if(!final && !hit) return;            // 입력 중에는 목록에 있는 편명이 완성됐을 때만 반영
+  if(!final && lastFlightApplied[k]===no && cur.no===no) return;
+  cur.no=no;
+  if(hit){
+    if(hit.dir!==k){ toast(k==='flightOut'?`${no}은(는) 신치토세 → 한국 편이에요. 오는 편에 넣어 주세요`:`${no}은(는) 한국 → 신치토세 편이에요. 가는 편에 넣어 주세요`); cur.auto=false; }
+    else { Object.assign(cur,{dep:hit.dep,arr:hit.arr,auto:true},hit.from?{from:hit.from}:{},hit.to?{to:hit.to}:{}); if(lastFlightApplied[k]!==no) toast(`${airlineOf(no)} ${no} 시간을 자동으로 넣었어요`); }
+  } else cur.auto=false;
+  lastFlightApplied[k]=no;
+  await saveSettings({[k]:cur});
+}
+
+/* 카톡 공유용 텍스트 */
+function dayText(day){
+  const items=dayItems(day); if(!items.length) return `[${dayLabel(day)}]\n(일정 없음)`;
+  const sch=computeSchedule(items), rt=sch.rt; const lines=[`[${dayLabel(day)}]`];
+  items.forEach((it,i)=>{
+    const r=sch.rows[i], s=it.stop;
+    if(i>0){const sg=rt.segs[i-1]; if(sg&&sg.o.k!=='none'&&!(it.noLoc)) lines.push(`   ↓ ${MODES[sg.o.k].i} ${MODES[sg.o.k].l} ${fmtMin(sg.o.m)}${sg.rk>=0.3?` (${fmtKm(sg.rk)})`:''}`);}
+    if(it.virtual==='arr') lines.push(`${hm(r.arrive)} ✈️ ${it.name}`);
+    else if(it.virtual==='dep') lines.push(`${hm(r.deadline)}까지 공항 도착 → ${hm(r.depart)} ✈️ ${it.name}`);
+    else{
+      const t=r.arrive!=null?`${hm(r.arrive)}~${hm(r.depart)}`:'시간 미정';
+      lines.push(`${t} ${CAT_ICON[s.cat]||'📍'} ${s.name}${s.kind==='note'&&s.placeName?` @${s.placeName}`:''}`);
+      if(s.memo) lines.push(`   📝 ${s.memo}`);
+    }
+  });
+  const located=items.filter(x=>!x.noLoc);
+  if(located.length>1) lines.push(`🗺 지도: ${gmapsAll(located)}`);
+  return lines.join('\n');
+}
+function tripText(onlyDay){
+  const st=state.settings, out=[];
+  out.push(`🗾 ${st.name||'삿포로 여행'}`);
+  if(st.start&&st.end) out.push(`📅 ${st.start.slice(5).replace('-','/')} ~ ${st.end.slice(5).replace('-','/')} (${dayCount()-1}박 ${dayCount()}일)`);
+  if(!onlyDay){
+    const fo=st.flightOut||{}, fi=st.flightIn||{};
+    if(fo.no||fo.dep) out.push(`✈️ 가는 편 ${fo.no||''} ${fo.from||''} ${fo.dep||''} → 신치토세 ${fo.arr||''}`.replace(/\s+/g,' ').trim());
+    if(fi.no||fi.dep) out.push(`✈️ 오는 편 ${fi.no||''} 신치토세 ${fi.dep||''} → ${fi.to||''} ${fi.arr||''}`.replace(/\s+/g,' ').trim());
+    hotels().forEach(h=>out.push(`🏨 ${h.name} (${dayLabel(Number(h.from||1)).replace(/^Day \d+ · /,'')} 체크인 ~ ${dayLabel(Number(h.to||dayCount())).replace(/^Day \d+ · /,'')} 체크아웃)`));
+  }
+  out.push('');
+  const days=onlyDay?[onlyDay]:Array.from({length:dayCount()},(_,i)=>i+1);
+  out.push(days.map(dayText).join('\n\n'));
+  out.push('\n※ 이동 시간은 예상치예요.');
+  return out.join('\n');
+}
+function openShareText(onlyDay){
+  const txt=tripText(onlyDay);
+  $('#modalRoot').innerHTML=`<div class="modal" data-modal-bg><div class="sheet"><h2 style="margin-top:0">💬 카톡으로 보내기</h2>
+    <p class="muted" style="margin-top:0">복사해서 카톡방에 붙여넣으면 돼요. Claude가 없는 사람도 볼 수 있어요.</p>
+    <textarea id="shareText" rows="14" style="font-size:13px;line-height:1.5" readonly>${esc(txt)}</textarea>
+    <div class="row" style="margin-top:10px"><button class="btn" data-share-copy>복사하기</button><button class="btn sec" data-modal-close>닫기</button></div></div></div>`;
+}
+/* =========================================================
+   14. 렌더링
+   ========================================================= */
+function render(){
+  // 입력 중인 칸의 포커스·커서 보존
+  const ae=document.activeElement; let keep=null;
+  if(ae&&ae.closest&&ae.closest('#app')&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT')){
+    keep={sel:selectorOf(ae),s:ae.selectionStart,e:ae.selectionEnd,v:ae.type==='checkbox'?null:ae.value};
+  }
+  const st=state.settings;
+  $('#tripTitle').textContent=st.name||'삿포로 여행';
+  $('#tripDates').textContent=st.start&&st.end?`${st.start.replace(/-/g,'.')} ~ ${st.end.slice(5).replace('-','.')} · ${dayCount()-1}박 ${dayCount()}일 · ${members().length}명`:'설정 탭에서 날짜와 동행인을 넣어 주세요';
+  if(VIEWER&&(state.tab==='money'||state.tab==='setup')) state.tab='plan';
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===state.tab));
+  const views={plan:viewPlan,course:viewCourse,route:viewRoute,money:viewMoney,check:viewCheck,info:viewInfo,setup:viewSettings};
+  // 남아 있던 폼 값 보존 (가계부 입력 중 다른 사람의 변경이 와도 사라지지 않게)
+  const saved={}; document.querySelectorAll('#app [id]').forEach(el=>{if(el.tagName==='INPUT'&&el.type!=='checkbox'||el.tagName==='SELECT')saved[el.id]=el.value});
+  const savedChecks=[...document.querySelectorAll('.exSplit')].map(c=>[c.value,c.checked]);
+  $('#app').innerHTML=views[state.tab]();
+  if(!renderFresh){
+    for(const [id,v] of Object.entries(saved)){const el=document.getElementById(id);if(el&&v!==''&&!(id==='calcDay'))el.value=v}
+    savedChecks.forEach(([v,c])=>{const el=[...document.querySelectorAll('.exSplit')].find(x=>x.value===v);if(el)el.checked=c});
+  }
+  renderFresh=false;
+  if(keep&&keep.sel){const el=document.querySelector(keep.sel);if(el){if(keep.v!=null&&el.value!==keep.v&&el.type!=='date')el.value=keep.v;el.focus();try{if(keep.s!=null)el.setSelectionRange(keep.s,keep.e)}catch(e){}}}
+  for(const id of Object.keys(pickers)) renderSugg(id);
+  updateExConv();
+}
+let renderFresh=true;
+function selectorOf(el){
+  for(const a of ['data-pk-input','data-pk-coord','data-set','data-fl','data-stop-time','data-stop-stay']) if(el.hasAttribute(a)) return `[${a}="${el.getAttribute(a)}"]`;
+  return el.id?'#'+el.id:null;
+}
+function updateExConv(){
+  const a=document.getElementById('exAmt'),c=document.getElementById('exCur'),o=document.getElementById('exConv');
+  if(!a||!o) return; const v=Number(a.value)||0;
+  const rr=document.getElementById('exRateRow'); if(rr) rr.style.display=c.value==='JPY'?'':'none';
+  const er=document.getElementById('exRate'); const r=er&&Number(er.value)?Number(er.value):rate();
+  o.textContent=v&&c.value==='JPY'?'≈ '+won(toKRW(v,'JPY',r)):'';
+}
+function go(tab){state.tab=tab;renderFresh=true;try{history.replaceState(null,'','#'+tab)}catch(e){location.hash=tab}render();window.scrollTo({top:0})}
+
+/* =========================================================
+   15. 모달 (장소 수정)
+   ========================================================= */
+function openStopModal(id){
+  const s=state.stops.find(x=>x.id===id); if(!s) return;
+  const n=dayCount();
+  $('#modalRoot').innerHTML=`<div class="modal" data-modal-bg><div class="sheet">
+    <h2 style="margin-top:0">장소 수정</h2>
+    <div class="field"><label>이름</label><input type="text" id="mName" value="${esc(s.name)}"></div>
+    <div class="grid2"><div class="field"><label>도착 시간 (비우면 자동)</label><input type="time" id="mTime" value="${esc(s.time||'')}"></div>
+    <div class="field"><label>날짜</label><select id="mDay">${Array.from({length:n},(_,i)=>`<option value="${i+1}" ${Number(s.day)===i+1?'selected':''}>${dayLabel(i+1)}</option>`).join('')}</select></div></div>
+    <div class="field"><label>분류</label><select id="mCat">${Object.keys(CAT_ICON).map(c=>`<option ${s.cat===c?'selected':''}>${c}</option>`).join('')}</select></div>
+    <div class="field"><label>머무는 시간</label><select id="mStay">${STAY_OPTS.map(m=>`<option value="${m}" ${Number((s.stay!==undefined&&s.stay!=='')?s.stay:(DEFAULT_STAY[s.cat]??60))===m?'selected':''}>${stayLabel(m)}</option>`).join('')}</select></div>
+    <div class="field"><label>메모</label><input type="text" id="mMemo" value="${esc(s.memo||'')}" placeholder="예약 번호, 먹을 메뉴 등"></div>
+    <div class="field"><label>좌표 (구글맵 링크를 붙여넣어도 돼요)</label><input type="text" id="mCoord" value="${s.lat==null||s.lat===''?'':Number(s.lat).toFixed(5)+', '+Number(s.lng).toFixed(5)}" placeholder="${s.kind==='note'?'비워두면 장소 없음':''}"></div>
+    <div class="row"><button class="btn" data-modal-save="${s.id}">저장</button><button class="btn sec" data-modal-close>닫기</button></div>
+  </div></div>`;
+}
+function closeModal(){$('#modalRoot').innerHTML=''}
+
+/* =========================================================
+   16. 이벤트
+   ========================================================= */
+function nextOrder(day){const l=stopsOf(day);return l.length?Math.max(...l.map(s=>s.order||0))+1:1}
+async function addStop(day,place,time,memo,stay){
+  if(state.readOnly) return toast('보기 전용이에요');
+  const id=uid();
+  await writeDoc('stops',id,{day,order:nextOrder(day),name:place.name,lat:place.lat,lng:place.lng,area:place.area||inferArea(place.lat,place.lng),pid:place.id||'',cat:place.cat||'내 장소',time:time||'',stay:(stay===''||stay==null)?'':Number(stay),memo:memo||'',modeNext:''});
+}
+async function saveCustomPlace(name,c){
+  const area=inferArea(c.lat,c.lng);
+  const id='c'+uid();
+  const p={name,lat:c.lat,lng:c.lng,area,cat:'내 장소'};
+  await writeDoc('places',id,p);
+  return {...p,id};
+}
+
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('button,[data-modal-bg]'); if(!t) return;
+  const d=t.dataset;
+  if(t.matches('[data-modal-bg]')&&e.target!==t) return;
+  if(t.matches('[data-modal-bg]')) return closeModal();
+  if(d.tab) return go(d.tab);
+  if(d.day){state.day=Number(d.day);return render()}
+  // 장소 선택기
+  if(d.pkPick){const p=pickers[d.pkPick];return pickPlace(d.pkPick,p.list[Number(d.i)])}
+  if(d.pkManual){const p=pickers[d.pkManual];p.manual=true;p.open=false;return render()}
+  if(d.pkClear){const p=pickers[d.pkClear];p.sel=null;p.q='';p.manual=false;return render()}
+  if(d.pkCoordok){
+    const id=d.pkCoordok,p=pickers[id];const inp=document.querySelector(`[data-pk-coord="${id}"]`);
+    const lk=parseMapsLink(inp&&inp.value); const c=lk&&lk.lat!=null?lk:parseCoords(inp&&inp.value);
+    if(!c||Math.abs(c.lat)>90||Math.abs(c.lng)>180) return toast('좌표를 읽지 못했어요. 예: 43.0686, 141.3507');
+    const name=p.q.trim()||'새 장소';
+    const place=state.readOnly?{name,lat:c.lat,lng:c.lng,area:inferArea(c.lat,c.lng),cat:'내 장소'}:await saveCustomPlace(name,c);
+    toast(`“${name}” 장소를 추가했어요`);
+    return pickPlace(id,place);
+  }
+  // 일정
+  if(d.addStop!==undefined){
+    const p=pickers.plan; if(!p||!p.sel) return toast('먼저 장소를 검색해서 골라 주세요');
+    await addStop(state.day,p.sel,$('#planTime').value,$('#planMemo').value,$('#planStay').value);
+    p.sel=null;p.q='';const ti=$('#planTime'),me=$('#planMemo');if(ti)ti.value='';if(me)me.value='';
+    renderFresh=true;render();return toast('추가했어요');
+  }
+  if(d.addMode){state.addMode=d.addMode;renderFresh=true;return render()}
+  if(d.addNote!==undefined){
+    const title=$('#noteTitle').value.trim(); if(!title) return toast('할 일을 적어 주세요');
+    const pl=pickers.note&&pickers.note.sel; const type=$('#noteType').value; const stayV=$('#noteStay').value;
+    const id=uid();
+    await writeDoc('stops',id,{day:state.day,order:nextOrder(state.day),kind:'note',name:title,cat:type,time:$('#noteTime').value||'',stay:stayV===''?'':Number(stayV),memo:$('#noteMemo').value||'',
+      lat:pl?pl.lat:null,lng:pl?pl.lng:null,area:pl?(pl.area||inferArea(pl.lat,pl.lng)):'',pid:pl&&pl.id||'',placeName:pl?pl.name:'',modeNext:''});
+    if(pickers.note){pickers.note.sel=null;pickers.note.q=''}
+    renderFresh=true;render();return toast('일정을 추가했어요');
+  }
+  if(d.addHotel!==undefined){const h=hotels()[Number(d.addHotel)||0];if(h)await addStop(state.day,{...h,cat:'숙소'},'','','');return}
+  if(d.mv){
+    const list=stopsOf(state.day);const i=list.findIndex(s=>s.id===d.mv);const j=i+Number(d.dir);
+    if(j<0||j>=list.length) return;
+    const a=list[i],b=list[j];
+    // 순서를 다시 매겨서 겹치지 않게
+    const reordered=[...list];[reordered[i],reordered[j]]=[reordered[j],reordered[i]];
+    for(let k=0;k<reordered.length;k++){const s=reordered[k];if((s.order||0)!==k+1){const {id,...rest}=s;await writeDoc('stops',id,{...rest,order:k+1,modeNext:''})}}
+    return;
+  }
+  if(d.delStop){const s=state.stops.find(x=>x.id===d.delStop);if(s&&await confirmBox(`“${s.name}”을(를) 일정에서 뺄까요?`))await deleteDoc('stops',s.id);return}
+  if(d.editStop) return openStopModal(d.editStop);
+  if(d.modalClose!==undefined) return closeModal();
+  if(d.modalSave){
+    const s=state.stops.find(x=>x.id===d.modalSave);if(!s)return closeModal();
+    const mc=$('#mCoord').value.trim(); const lk=parseMapsLink(mc); const c=(lk&&lk.lat!=null?lk:parseCoords(mc))||(s.kind==='note'&&!mc?{lat:null,lng:null}:{lat:s.lat,lng:s.lng});
+    const nd=Number($('#mDay').value);
+    const {id,...rest}=s;
+    const upd={...rest,name:$('#mName').value.trim()||s.name,time:$('#mTime').value,stay:Number($('#mStay').value),memo:$('#mMemo').value,cat:$('#mCat').value,lat:c.lat,lng:c.lng,area:c.lat==null?'':inferArea(c.lat,c.lng)};
+    if(nd!==Number(s.day)){upd.day=nd;upd.order=nextOrder(nd);upd.modeNext=''}
+    closeModal();await writeDoc('stops',id,upd);return;
+  }
+  if(d.segArr!==undefined){await saveSettings({arrMode:d.mode});return}
+  if(d.stopClearTime){const x=state.stops.find(z=>z.id===d.stopClearTime);if(x){const {id,...rest}=x;await writeDoc('stops',id,{...rest,time:''})}return}
+  if(d.sortTime!==undefined){
+    const list=stopsOf(state.day);let last='';const keyed=list.map((x,i)=>{if(x.time)last=x.time;return {x,k:last||'00:00',i}});
+    keyed.sort((p,q)=>p.k.localeCompare(q.k)||p.i-q.i);
+    let changed=0;for(let k=0;k<keyed.length;k++){const x=keyed[k].x;if((x.order||0)!==k+1){const {id,...rest}=x;await writeDoc('stops',id,{...rest,order:k+1,modeNext:''});changed++}}
+    return toast(changed?'시간순으로 정렬했어요':'이미 시간순이에요');
+  }
+  if(d.segStop){const s=state.stops.find(x=>x.id===d.segStop);if(s&&!state.readOnly){const {id,...rest}=s;await writeDoc('stops',id,{...rest,modeNext:d.mode})}return}
+  // 거리 계산
+  if(d.calcAdd!==undefined){const p=pickers.calc;if(!p||!p.sel)return toast('먼저 장소를 검색해서 골라 주세요');
+    const s=p.sel;state.calc.push({name:s.name,lat:s.lat,lng:s.lng,area:s.area,h:s.h||'',st:s.st||[],tr:!!s.tr,pid:s.id||'',cat:s.cat||'내 장소'});saveLS('calc',state.calc);p.sel=null;p.q='';return render()}
+  if(d.calcClear!==undefined){state.calc=[];saveLS('calc',[]);return render()}
+  if(d.calcDel!==undefined){state.calc.splice(Number(d.calcDel),1);state.calc.forEach(x=>x.modeNext='');saveLS('calc',state.calc);return render()}
+  if(d.calcMv!==undefined){const i=Number(d.calcMv),j=i+Number(d.dir);const c=state.calc;[c[i],c[j]]=[c[j],c[i]];c.forEach(x=>x.modeNext='');saveLS('calc',c);return render()}
+  if(d.segCalc!==undefined){state.calc[Number(d.segCalc)].modeNext=d.mode;saveLS('calc',state.calc);return render()}
+  if(d.calcPush!==undefined){
+    const day=Number($('#calcDay').value);
+    for(const p of state.calc){const {modeNext,...pl}=p;const id=uid();await writeDoc('stops',id,{day,order:nextOrder(day),name:pl.name,lat:pl.lat,lng:pl.lng,area:pl.area,pid:pl.pid||'',cat:pl.cat||'내 장소',time:'',memo:'',modeNext:p.modeNext||''})}
+    toast(`${dayLabel(day)} 일정에 ${state.calc.length}곳을 넣었어요`);state.day=day;return go('plan');
+  }
+  // 가계부
+  if(d.exSave!==undefined){
+    const title=$('#exTitle').value.trim(),amount=Number($('#exAmt').value);
+    if(!title||!amount) return toast('내용과 금액을 넣어 주세요');
+    const split=[...document.querySelectorAll('.exSplit')].filter(c=>c.checked).map(c=>c.value);
+    if(!split.length) return toast('나눌 사람을 한 명 이상 골라 주세요');
+    const id=state.editingExpense||uid();const old=state.expenses.find(x=>x.id===id);
+    state.editingExpense=null;
+    const cur=$('#exCur').value; const erEl=document.getElementById('exRate'); const ownRate=state.isOwner&&cur==='JPY'&&erEl?Number(erEl.value):0;
+    await writeDoc('expenses',id,{title,amount,cur,cat:$('#exCat').value,date:$('#exDate').value,paidBy:$('#exPaid').value,split,ts:old?old.ts:Date.now(),rate:cur==='KRW'?'':(old&&old.rate?old.rate:rate())});
+    if(state.isOwner&&cur==='JPY'&&ownRate>=300&&ownRate<=3000&&ownRate!==effRate({...(old||{}),id,rate:old&&old.rate?old.rate:rate()})) await saveExRate(id,ownRate);
+    renderFresh=true;render();return toast('저장했어요');
+  }
+  if(d.exCancel!==undefined){state.editingExpense=null;renderFresh=true;return render()}
+  if(d.exEdit){state.editingExpense=d.exEdit;renderFresh=true;render();window.scrollTo({top:0,behavior:'smooth'});return}
+  if(d.exRate){const x=state.expenses.find(e=>e.id===d.exRate);if(!x)return;
+    $('#modalRoot').innerHTML=`<div class="modal" data-modal-bg><div class="sheet"><h2 style="margin-top:0">👑 지출 환율 수정</h2><p class="muted" style="margin-top:0">${esc(x.title)} · ${yen(x.amount)}</p>
+      <div class="field"><label>100엔당 원</label><input type="number" id="mExRate" inputmode="decimal" value="${effRate(x)}"></div>
+      <div class="row"><button class="btn" data-ex-rate-save="${x.id}">저장</button>${(state.fx.exRates||{})[x.id]?`<button class="btn sec" data-ex-rate-reset="${x.id}">입력 당시 환율로</button>`:''}<button class="btn sec" data-modal-close>닫기</button></div></div></div>`;return}
+  if(d.exRateSave){const v=Number($('#mExRate').value);if(!(v>=300&&v<=3000))return toast('100엔당 원화 금액을 넣어 주세요 (예: 850)');closeModal();if(await saveExRate(d.exRateSave,v))toast('이 지출의 환율을 바꿨어요');return}
+  if(d.exRateReset){closeModal();if(await saveExRate(d.exRateReset,0))toast('입력 당시 환율로 되돌렸어요');return}
+  if(d.exDel){const x=state.expenses.find(e=>e.id===d.exDel);if(x&&await confirmBox(`“${x.title}” 지출을 지울까요?`)){await deleteDoc('expenses',x.id);if(state.isOwner&&(state.fx.exRates||{})[x.id])await saveExRate(x.id,0)}return}
+  // 체크리스트
+  if(d.checkDefaults!==undefined){let o=1;for(const [cat,text] of DEFAULT_CHECK){await writeDoc('checklist',uid(),{cat,text,done:false,who:'',order:o++})}return toast('기본 목록을 불러왔어요')}
+  if(d.checkAdd!==undefined){const text=$('#ckText').value.trim();if(!text)return;await writeDoc('checklist',uid(),{cat:$('#ckCat').value,text,done:false,who:$('#ckWho').value,order:Date.now()});const el=$('#ckText');if(el){el.value='';el.focus()}return}
+  if(d.ckDel){e.preventDefault();await deleteDoc('checklist',d.ckDel);return}
+  // 설정
+  if(d.flFill){const k=d.flFill;lastFlightApplied[k]=null;await applyFlightNo(k,(state.settings[k]||{}).no,true);return}
+  if(d.courseAdd){const sel=document.querySelector(`[data-course-day="${d.courseAdd}"]`);const day=Number(sel?sel.value:1);
+    if(stopsOf(day).length&&!(await confirmBox2(`${dayLabel(day)}에 이미 장소가 ${stopsOf(day).length}곳 있어요. 뒤에 이어서 넣을까요?`,'이어서 넣기')))return;
+    await addCourse(d.courseAdd,day);state.day=day;toast(`${dayLabel(day)}에 코스를 넣었어요`);return go('plan')}
+  if(d.presetAll!==undefined){let added=0;for(const [day,cid] of Object.entries(PLAN_PRESET)){const dn=Number(day);if(dn<=dayCount()&&!stopsOf(dn).length){await addCourse(cid,dn);added++}}
+    toast(added?`${added}일치 일정을 채웠어요`:'이미 모든 날에 일정이 있어요');state.day=1;return go('plan')}
+  if(d.shareAll!==undefined) return openShareText(0);
+  if(d.shareDay!==undefined) return openShareText(state.day);
+  if(d.shareCopy!==undefined){const ta=$('#shareText');try{await navigator.clipboard.writeText(ta.value);toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(err){ta.removeAttribute('readonly');ta.focus();ta.select();try{document.execCommand('copy');toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(e2){toast('글을 길게 눌러 전체 선택 후 복사해 주세요')}ta.setAttribute('readonly','')}return}
+  if(d.publishPublic!==undefined) return publishSnapshot();
+  if(d.copyPublic!==undefined){try{await navigator.clipboard.writeText(PUBLIC_URL);toast('공개 링크를 복사했어요')}catch(err){const el=$('#publicUrl');if(el){el.focus();el.select()}toast('링크를 길게 눌러 복사해 주세요')}return}
+  if(d.copyInvite!==undefined){try{await navigator.clipboard.writeText(PAGE_URL);toast('초대 링크를 복사했어요')}catch(err){const el=$('#inviteUrl');if(el){el.focus();el.select()}toast('링크를 길게 눌러 복사해 주세요')}return}
+  if(d.fxSave!==undefined){const v=Number($('#fxRate').value);if(!(v>=300&&v<=3000))return toast('100엔당 원화 금액을 넣어 주세요 (예: 850)');await saveFx(v);const el=$('#fxRate');if(el)el.value='';return}
+  if(d.hotelSave!==undefined){const p=pickers.hotel;if(!p||!p.sel)return toast('숙소를 검색해서 골라 주세요');const s=p.sel;const list=hotels().slice();
+    const prevTo=list.length?Number(list[list.length-1].to||dayCount()):1;
+    list.push({name:s.name,lat:s.lat,lng:s.lng,area:s.area,id:s.id||'',st:s.st||[],tr:!!s.tr,from:list.length?Math.min(prevTo,dayCount()):1,to:dayCount()});
+    await saveSettings({hotels:list,hotel:null});p.sel=null;p.q='';render();return toast('숙소를 추가했어요')}
+  if(d.hotelDel!==undefined){const list=hotels().slice();list.splice(Number(d.hotelDel),1);await saveSettings({hotels:list,hotel:null});return}
+  if(d.hotelClear!==undefined){const {hotel,...rest}=state.settings;state.settings=rest;await saveSettings({});return}
+  if(d.placeDel){await deleteDoc('places',d.placeDel);return}
+  if(d.confirmYes!==undefined||d.confirmNo!==undefined){const r=d.confirmYes!==undefined;closeModal();confirmBox._res&&confirmBox._res(r);return}
+});
+function confirmBox2(msg,yes){
+  return new Promise(res=>{confirmBox._res=res;
+    $('#modalRoot').innerHTML=`<div class="modal"><div class="sheet"><p style="font-size:16px;margin-top:0">${esc(msg)}</p><div class="row"><button class="btn" data-confirm-yes>${esc(yes)}</button><button class="btn sec" data-confirm-no>취소</button></div></div></div>`;});
+}
+function confirmBox(msg){
+  return new Promise(res=>{
+    confirmBox._res=res;
+    $('#modalRoot').innerHTML=`<div class="modal"><div class="sheet"><p style="font-size:16px;margin-top:0">${esc(msg)}</p><div class="row"><button class="btn red" data-confirm-yes>삭제</button><button class="btn sec" data-confirm-no>취소</button></div></div></div>`;
+  });
+}
+document.addEventListener('input',e=>{
+  const t=e.target,d=t.dataset;
+  if(d.pkInput){
+    const link=parseMapsLink(t.value);
+    if(link&&link.lat!=null){const id=d.pkInput;(async()=>{const pl=await placeFromLink(link,'');toast(`구글맵 링크에서 “${pl.name}”을(를) 가져왔어요`);pickPlace(id,pl)})();return}
+    if(link&&link.short){const p=pickers[d.pkInput];p.q='';t.value='';toast('짧은 공유 링크(maps.app.goo.gl)는 위치를 읽을 수 없어요. 브라우저 주소창의 긴 링크를 붙여넣어 주세요');return}
+    const p=pickers[d.pkInput];p.q=t.value;p.open=true;p.hl=0;p.sel=null;p.manual=false;
+    // 선택 해제 표시만 갱신
+    const pk=t.closest('.picker');const pe=pk&&pk.querySelector('.picked');if(pe)pe.remove();const w=pk&&pk.querySelector('.warn');if(w)w.remove();
+    return renderSugg(d.pkInput)}
+  if(d.fl){
+    const [k,f]=d.fl.split('.');
+    if(f==='no') applyFlightNo(k,t.value,false);
+    clearTimeout(flTimers[d.fl]);
+    flTimers[d.fl]=setTimeout(()=>{ if(f==='no') applyFlightNo(k,t.value,true); else { const cur={...(state.settings[k]||{})}; if(cur[f]!==t.value){cur[f]=t.value; saveSettings({[k]:cur});} } },700);
+    return;
+  }
+  if(d.pkCoord){const id=d.pkCoord;const link=parseMapsLink(t.value);const c=link&&link.lat!=null?link:parseCoords(t.value);
+    if(c&&Math.abs(c.lat)<=90&&Math.abs(c.lng)<=180&&(link||/\d+\.\d{3,}\s*,\s*-?\d+\.\d{3,}/.test(t.value))){
+      (async()=>{const p=pickers[id];const pl=await placeFromLink({lat:c.lat,lng:c.lng,name:p.q.trim()||(link&&link.name)||''},p.q.trim());toast(`“${pl.name}” 장소를 추가했어요`);pickPlace(id,pl)})();}
+    return}
+  if(t.id==='exAmt'||t.id==='exCur'||t.id==='exRate') return updateExConv();
+  if(t.id==='fxJ'){const k=$('#fxK');k.value=t.value?Math.round(Number(t.value)*rate()/100):'';return}
+  if(t.id==='fxK'){const j=$('#fxJ');j.value=t.value?Math.round(Number(t.value)*100/rate()):'';return}
+});
+document.addEventListener('change',async e=>{
+  const t=e.target,d=t.dataset;
+  if(d.fl){const [k,f]=d.fl.split('.');const cur={...(state.settings[k]||{})};
+    if(f==='no'){ await applyFlightNo(k,t.value,true); return; }
+    else { cur[f]=t.value; if(f==='dep'||f==='arr'||f==='from'||f==='to'){ const hit=FLIGHT_TABLE[cur.no]; if(hit&&hit[f]!==undefined&&hit[f]!==t.value) cur.auto=false; } }
+    await saveSettings({[k]:cur});return}
+  if(d.stopTime||d.stopStay){const sid=d.stopTime||d.stopStay;const x=state.stops.find(z=>z.id===sid);if(x){const {id,...rest}=x;const patch=d.stopTime?{time:t.value}:{stay:Number(t.value)};await writeDoc('stops',id,{...rest,...patch})}return}
+  if(d.set){let v=t.value;if(d.set==='rate'||d.set==='budget')v=v?Number(v):'';
+    if(d.set==='start'&&state.settings.end&&v>state.settings.end){await saveSettings({start:v,end:v});return}
+    await saveSettings({[d.set]:v});return}
+  if(d.hotelFrom!==undefined||d.hotelTo!==undefined){const i=Number(d.hotelFrom??d.hotelTo);const list=hotels().map(h=>({...h}));if(!list[i])return;
+    if(d.hotelFrom!==undefined)list[i].from=Number(t.value);else list[i].to=Number(t.value);
+    if(list[i].from>list[i].to){if(d.hotelFrom!==undefined)list[i].to=list[i].from;else list[i].from=list[i].to}
+    await saveSettings({hotels:list,hotel:null});return}
+  if(d.ck){const i=state.checklist.find(x=>x.id===d.ck);if(i){const {id,...rest}=i;await writeDoc('checklist',id,{...rest,done:t.checked})}return}
+  if(t.id==='exCur') updateExConv();
+});
+document.addEventListener('keydown',e=>{
+  const t=e.target;
+  if(t.dataset&&t.dataset.pkInput){
+    const id=t.dataset.pkInput,p=pickers[id];const n=(p.list||[]).length;
+    if(e.key==='ArrowDown'){p.hl=Math.min(n,p.hl+1);renderSugg(id);e.preventDefault()}
+    else if(e.key==='ArrowUp'){p.hl=Math.max(0,p.hl-1);renderSugg(id);e.preventDefault()}
+    else if(e.key==='Enter'){e.preventDefault();if(p.list&&p.list[p.hl])pickPlace(id,p.list[p.hl]);else if(p.q.trim()){p.manual=true;p.open=false;render()}}
+    else if(e.key==='Escape'){p.open=false;renderSugg(id)}
+  }
+  if(t.id==='ckText'&&e.key==='Enter'){document.querySelector('[data-check-add]').click()}
+});
+document.addEventListener('focusout',e=>{
+  const t=e.target;if(t.dataset&&t.dataset.pkInput){const id=t.dataset.pkInput;setTimeout(()=>{const a=document.activeElement;if(pickers[id]&&!(a&&a.dataset&&a.dataset.pkInput===id)){pickers[id].open=false;renderSugg(id)}},180)}
+});
+document.addEventListener('mousedown',e=>{if(e.target.closest('.sugg'))e.preventDefault()});
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(TABS.includes(h)&&h!==state.tab){state.tab=h;renderFresh=true;render()}});
+
+/* 시작 */
+loadLocal(); render(); initDB();
+</script>
+</body>
+</html>
