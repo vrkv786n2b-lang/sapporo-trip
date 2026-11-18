@@ -1247,8 +1247,8 @@ const MJ_STEPS=[
 function mjDone(){return loadLS('mjSteps',{})}
 function viewMJ(){
   const sub=state.mjView||'guide';
-  const chips=`<div class="chips" style="margin-bottom:12px"><button class="chip ${sub==='guide'?'on':''}" data-mj-view="guide">📌 가이드</button><button class="chip ${sub==='book'?'on':''}" data-mj-view="book">📅 비대면 진료 예약</button></div>`;
-  return chips+(sub==='book'?viewMJBook():viewMJGuide());
+  const chips=`<div class="chips" style="margin-bottom:12px"><button class="chip ${sub==='guide'?'on':''}" data-mj-view="guide">📌 가이드</button><button class="chip ${sub==='book'?'on':''}" data-mj-view="book">📅 비대면 진료 예약</button><button class="chip ${sub==='clinic'?'on':''}" data-mj-view="clinic">🏥 클리닉 비교</button></div>`;
+  return chips+(sub==='book'?viewMJBook():sub==='clinic'?viewMJClinics():viewMJGuide());
 }
 function viewMJGuide(){
   const done=mjDone(); const cnt=MJ_STEPS.filter((_,i)=>done[i]).length;
@@ -1293,6 +1293,72 @@ function viewMJGuide(){
   </div>`;
 }
 
+
+/* 클리닉 비교 데이터 (2026.11.17~18 공개 정보 기준, 바뀔 수 있음) */
+const MJ_CLINICS=[
+ {id:'ys',name:'유신내과클리닉',jp:'ゆうしん内科クリニック',kind:'both',where:'삿포로 주오구 미나미20조 니시16초메 · 노면전차 로프웨이이리구치 도보 약 5분',lang:'한국어 예약 페이지 · 진료는 영어/일본어',ko:1,p4:null,p4t:'사이트에 가격 미표시 → 문의',p12:null,fee:'0엔(약·용량 정해진 경우) / 상담 5,500엔',ship:'배송 2,500엔 · 호텔 배송은 체크인 약 1주 전 주문 · 클리닉 직접 수령 가능',lead:'방문 시 예약 없이 당일 진료',leadDays:0,cert:'세관 제출용 진단서 3,300엔',hours:'월·화·목·금 9:10–11:45, 14:40–16:45 / 수·토 오전만 / 일·공휴일 휴진',fit:'good',url:'https://www.ys-med.com/diet/ko/mounjaro/',src:'공식 사이트(한국어)'},
+ {id:'east',name:'이스트에키마에 클리닉 삿포로원',jp:'イースト駅前クリニック札幌院',kind:'both',where:'삿포로역 지하 직결(아스티45)',lang:'일본어 · 외국인 여행자 진료 가능 여부 확인 필요',ko:0,p4:24400,p4t:'월 24,400엔(첫 달 19,400엔~)',p12:null,fee:'초진 0엔(처방 없으면 3,300엔)',ship:'방문 수령 · 온라인 진료도 있음',lead:'방문 당일',leadDays:0,cert:'확인 필요',hours:'연중무휴',fit:'good',url:'',src:'일본 비교 기사(2026)'},
+ {id:'ssc',name:'SSC 뷰티클리닉',jp:'SSCビューティークリニック',kind:'both',where:'삿포로역 북쪽 출구 지하보도 13번 출구 도보 1분',lang:'일본어 · 외국인 진료 여부 확인 필요',ko:0,p4:22000,p4t:'1개 5,500엔(2.5mg) · 4개 22,000엔 + 진찰료 2,000엔',p12:null,fee:'진찰료 2,000엔',ship:'원내 처방 · 1개 단위 구매 가능',lead:'방문 당일(예약 권장)',leadDays:0,cert:'확인 필요',hours:'화–토 10:00–18:00 (월·일·공휴일 휴진)',fit:'good',url:'https://sscbeauty.com/',src:'일본 비교 기사(2026)'},
+ {id:'slim',name:'슬림클리닉 삿포로점',jp:'スリムクリニック 札幌',kind:'visit',where:'삿포로 시내',lang:'확인 필요',ko:0,p4:10700,p4t:'4개 10,700엔(방문)',p12:null,fee:'확인 필요',ship:'방문 수령',lead:'방문(예약 확인)',leadDays:0,cert:'확인 필요',hours:'확인 필요',fit:'check',url:'',src:'Weblio케어 기사(11/17)'},
+ {id:'hani',name:'HANI CLINIC',jp:'HANI CLINIC',kind:'online',where:'온라인 · 일본 내 호텔로 냉장 배송',lang:'한국어 원어민 의사 · 카카오톡 진료',ko:2,p4:null,p4t:'30일분(4개) 187,000원 · 진료·배송비 포함',p4krw:187000,p12:null,fee:'포함',ship:'호텔 프런트로 냉장 배송',lead:'진료일로부터 최소 4일 후 배송',leadDays:4,cert:'영문 진단서 제공',hours:'온라인 예약',fit:'check',url:'https://hani-clinic.com/',src:'공식 사이트·Weblio케어'},
+ {id:'mirai',name:'미라이 메디컬 클리닉',jp:'未来メディカルクリニック',kind:'online',where:'온라인(도쿄) · 일본 내 호텔로 냉장 배송',lang:'예약·진료·사후 상담 모두 한국어 · 카카오톡 예약',ko:2,p4:null,p4t:'사이트에 가격 미표시 → 문의',p12:null,fee:'진료비 0엔 · 예약 보증금 3,000엔',ship:'냉장 배송 기본 0엔 · 홋카이도는 3일 이상 걸릴 수 있음',lead:'받을 날 3일 전까지 진료·결제',leadDays:3,cert:'영문 진단서·처방 증명서 5,000엔',hours:'24시간 365일 진료',fit:'check',url:'https://mirai-medical.clinic/ko/mounjaro/',src:'공식 사이트(한국어)'},
+ {id:'kabu',name:'카부쿠리',jp:'カブクリ',kind:'online',where:'온라인 · 전국 호텔·숙소 냉장 배송',lang:'예약·문진표·LINE 한국어 · 진찰은 전화(일본어/간단한 영어)',ko:1,p4:11980,p4t:'4개 11,980엔(진료·배송 포함)',p12:31980,fee:'포함',ship:'전국 호텔 냉장 배송 (영업소 수령 없음)',lead:'받을 날 4일 이상 전 진찰',leadDays:4,cert:'확인 필요',hours:'온라인',fit:'check',url:'',src:'Weblio케어 기사(11/17)'},
+ {id:'joy',name:'나고야 조이 클리닉',jp:'名古屋ジョイクリニック',kind:'online',where:'온라인 · 호텔 또는 야마토 영업소 냉장 배송',lang:'영상통화 영어(번역 앱 가능) · 진찰·결제는 일본 입국 후',ko:0,p4:11980,p4t:'4개 11,980엔(진료·배송 포함)',p12:31980,fee:'포함',ship:'호텔/야마토 영업소 냉장 배송',lead:'16:30까지 진찰·17:00까지 결제 시 다음 날 수령 (홋카이도 확인 필요)',leadDays:1,cert:'확인 필요',hours:'온라인',fit:'good',url:'',src:'Weblio케어 기사(11/17)'},
+ {id:'silk',name:'도쿄 실크클리닉',jp:'東京シルククリニック',kind:'online',where:'온라인 · 호텔 또는 야마토 영업소 냉장 배송',lang:'LINE 문의 한국어 · 진찰 Google Meet 일본어/영어',ko:1,p4:9980,p4t:'호텔 배송 4개 9,980엔',p12:26940,fee:'확인 필요',ship:'일본 국내 호텔/영업소 냉장 배송',lead:'진료 후 약 5~7일',leadDays:6,cert:'확인 필요',hours:'온라인',fit:'hard',url:'',src:'Weblio케어 기사(11/17)'},
+ {id:'mil',name:'MIL CLINIC OSAKA',jp:'MIL CLINIC OSAKA',kind:'online',where:'온라인(오사카) · 전국 호텔 냉장 배송',lang:'Google Meet 일본어/영어',ko:0,p4:18500,p4t:'호텔 4개 17,000엔 + 홋카이도 1,500엔',p12:null,fee:'포함(배송비 2,200엔 포함가)',ship:'전국 호텔 냉장 배송 · 홋카이도 1,500엔 추가',lead:'받을 날 약 1주 전까지 진료·결제',leadDays:7,cert:'확인 필요',hours:'온라인',fit:'hard',url:'',src:'Weblio케어 기사(11/17)'},
+];
+const FIT_TAG={good:['짧은 일정에 맞음','#e7f6ee','#17663f'],check:['출국 전 진료 가능한지 확인','#fff4e5','#8a5a00'],hard:['3박 4일엔 빠듯함','#fde8eb','#b0172b']};
+function mjPriceKrw(c){ if(c.p4krw) return c.p4krw; return c.p4?c.p4*rate()/100:null }
+function viewMJClinics(){
+  const f=state.mjFilter||'all', sort=state.mjSort||'fit';
+  let list=MJ_CLINICS.filter(c=>f==='all'||(f==='visit'&&c.kind!=='online')||(f==='ko'&&c.ko>=1)||(f==='online'&&c.kind!=='visit'));
+  const fitRank={good:0,check:1,hard:2};
+  list=list.slice().sort((a,b)=>sort==='price'?((mjPriceKrw(a)??1e9)-(mjPriceKrw(b)??1e9)):sort==='ko'?(b.ko-a.ko):(fitRank[a.fit]-fitRank[b.fit])||((mjPriceKrw(a)??1e9)-(mjPriceKrw(b)??1e9)));
+  const q=n=>encodeURIComponent(n);
+  const cheapest4=MJ_CLINICS.filter(c=>mjPriceKrw(c)).sort((a,b)=>mjPriceKrw(a)-mjPriceKrw(b))[0];
+  const cheapest12=MJ_CLINICS.filter(c=>c.p12).sort((a,b)=>a.p12-b.p12)[0];
+  return `
+  <div class="card">
+    <h2>🏥 삿포로에서 받을 수 있는 곳 비교</h2>
+    <p class="muted" style="margin-top:-4px">2026년 11월 17~18일 공식 사이트와 기사에 나온 정보예요. 추천이나 보증이 아니고, 가격·조건은 자주 바뀌니 예약 전에 꼭 직접 확인하세요.</p>
+    <div class="chips">${[['all','전체'],['visit','삿포로 방문'],['ko','한국어 가능'],['online','온라인·호텔 배송']].map(([k,l])=>`<button class="chip ${f===k?'on':''}" data-mj-filter="${k}">${l}</button>`).join('')}</div>
+    <div class="row" style="margin-top:8px"><span class="muted">정렬</span><select data-mj-sort style="width:auto">${[['fit','이번 일정에 맞는 순'],['price','4개 가격 낮은 순'],['ko','한국어 지원 순']].map(([k,l])=>`<option value="${k}" ${sort===k?'selected':''}>${l}</option>`).join('')}</select></div>
+  </div>
+  <div class="card">
+    <h2>🔍 한눈에 보는 분석</h2>
+    <div class="kv">
+      <b>일정 조건</b><span>11/30 10:30 도착 → 12/3 11:30 출발이라 일본에 있는 시간이 사실상 2박 3일이에요. 진료 후 배송까지 4일 이상 걸리는 곳은 <b>출국 전 한국에서 진료</b>가 가능해야 하고, 안 되는 곳도 있어요.</span>
+      <b>가장 확실한 방법</b><span>삿포로 현지 방문형(유신내과·이스트에키마에·SSC)은 당일 받을 수 있어 일정이 짧을 때 유리해요. 다만 여행자 진료와 세관용 서류 발급 여부를 미리 물어보세요. 외국인 환영과 세관 진단서 발급을 공식적으로 밝힌 곳은 유신내과예요.</span>
+      <b>한국어로 편하게</b><span>HANI CLINIC(한국어 원어민 의사)·미라이 메디컬(전 과정 한국어)이 가장 편해요. 대신 배송까지 3~4일 이상 걸려서 출국 전에 진료를 끝낼 수 있는지가 관건이에요.</span>
+      <b>가격</b><span>4개 기준 가장 낮게 나온 곳은 ${esc(cheapest4.name)}(${esc(cheapest4.p4t)})이고, 12개(3개월) 기준은 ${esc(cheapest12.name)}(${yen(cheapest12.p12)}, 약 ${won(cheapest12.p12*rate()/100)})예요. 진료·배송비 포함 여부가 곳마다 달라서 총액으로 비교해야 해요.</span>
+      <b>반입 한도</b><span>본인용 최대 3개월치(주 1회 펜 12~13개)까지예요. 12개 묶음 가격이 있는 곳이 1개당 싸요.</span>
+    </div>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <h2>📊 비교표</h2>
+    <table style="min-width:620px"><tr><th>곳</th><th>방식</th><th>한국어</th><th class="r">4개(2.5mg)</th><th class="r">12개</th><th>받기까지</th></tr>
+    ${list.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td>${c.kind==='online'?'온라인':c.kind==='visit'?'방문':'방문+온라인'}</td><td>${c.ko===2?'✅ 진료까지':c.ko===1?'🔸 예약·문의':'—'}</td><td class="r">${c.p4krw?won(c.p4krw):c.p4?yen(c.p4):'문의'}${mjPriceKrw(c)&&!c.p4krw?`<div class="muted">≈${won(mjPriceKrw(c))}</div>`:''}</td><td class="r">${c.p12?yen(c.p12):'—'}</td><td>${esc(c.lead)}</td></tr>`).join('')}</table>
+  </div>
+  ${list.map(c=>{const ft=FIT_TAG[c.fit];return `<div class="card">
+    <div class="row" style="justify-content:space-between;gap:6px"><div><h2 style="margin:0">${esc(c.name)}</h2><div class="muted">${esc(c.jp)}</div></div><span class="tag" style="background:${ft[1]};color:${ft[2]}">${ft[0]}</span></div>
+    <div class="kv" style="margin-top:10px">
+      <b>위치·방식</b><span>${esc(c.where)}</span>
+      <b>언어</b><span>${esc(c.lang)}</span>
+      <b>가격(2.5mg)</b><span>${esc(c.p4t)}${c.p12?` · 12개 ${yen(c.p12)}`:''}${mjPriceKrw(c)&&!c.p4krw?` <span class="muted">(4개 ≈ ${won(mjPriceKrw(c))})</span>`:''}</span>
+      <b>진료비</b><span>${esc(c.fee)}</span>
+      <b>수령</b><span>${esc(c.ship)}</span>
+      <b>받기까지</b><span>${esc(c.lead)}</span>
+      <b>세관 서류</b><span>${esc(c.cert)}</span>
+      <b>운영</b><span>${esc(c.hours)}</span>
+      <b>정보 출처</b><span class="muted">${esc(c.src)}</span>
+    </div>
+    <div class="row" style="margin-top:10px;gap:6px">
+      ${c.url?`<a class="btn sec sm" style="text-decoration:none" href="${c.url}" target="_blank" rel="noopener">공식 사이트 ↗</a>`:`<a class="btn sec sm" style="text-decoration:none" href="https://www.google.com/search?q=${q(c.jp+' マンジャロ')}" target="_blank" rel="noopener">검색해서 찾기 ↗</a>`}
+      ${c.kind!=='online'?`<a class="btn sec sm" style="text-decoration:none" href="https://www.google.com/maps/search/?api=1&query=${q(c.jp+' 札幌')}" target="_blank" rel="noopener">🗺 지도 ↗</a>`:''}
+      <button class="btn sm" data-mj-pick="${c.id}">내 예약 정보에 담기</button>
+    </div></div>`}).join('')}
+  <p class="muted">이 목록은 광고나 추천이 아니에요. 처방 여부와 용량은 진료 의사가 정하고, 의학적인 질문은 의사에게 확인하세요.</p>`;
+}
 const MJ_FIELDS=[['clinic','클리닉 이름','예: ○○ 클리닉'],['url','예약 사이트 주소','https://'],['when','진료 날짜·시간',''],['method','진료 방식','LINE 영상통화 / Zoom / 전화'],['no','예약 번호',''],['hotel','배송 받을 숙소',''],['ship','배송 예정일',''],['cost','결제 금액 (엔)','']];
 function mjBook(){return loadLS('mjBook',{})}
 function jpPhrases(){
@@ -1528,7 +1594,7 @@ function viewSettings(){
     <ol style="padding-left:18px;margin:0" class="muted"><li>페이지 오른쪽 위의 <b>공유</b>를 눌러요.</li><li>동행인을 초대할 때 <b>편집 가능한 권한</b>(Contributor 이상)을 줘요. 보기 권한만 주면 읽기만 할 수 있어요.</li></ol>
     <p class="muted">현재 상태: <b>${state.mode==='cloud'?(state.readOnly?'보기 전용':'공유 저장 중'):'이 기기에만 저장 중'}</b></p>
   </div>
-  <p class="muted" style="text-align:center">페이지 버전 2026.11.18-17</p>
+  <p class="muted" style="text-align:center">페이지 버전 2026.11.18-18</p>
   ${state.places.length?`<div class="card"><h2>📍 직접 추가한 장소</h2>${state.places.map(p=>`<div class="check"><span class="t">${esc(p.name)} <span class="muted">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></span><button class="icon needwrite" data-place-del="${p.id}">✕</button></div>`).join('')}</div>`:''}`;
 }
 
@@ -1886,6 +1952,8 @@ document.addEventListener('click',async e=>{
   if(d.shareAll!==undefined) return openShareText(0);
   if(d.shareDay!==undefined) return openShareText(state.day);
   if(d.shareCopy!==undefined){const ta=$('#shareText');try{await navigator.clipboard.writeText(ta.value);toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(err){ta.removeAttribute('readonly');ta.focus();ta.select();try{document.execCommand('copy');toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(e2){toast('글을 길게 눌러 전체 선택 후 복사해 주세요')}ta.setAttribute('readonly','')}return}
+  if(d.mjFilter){state.mjFilter=d.mjFilter;return render()}
+  if(d.mjPick){const c=MJ_CLINICS.find(x=>x.id===d.mjPick);if(c){const b=mjBook();b.clinic=c.name;if(c.url)b.url=c.url;saveLS('mjBook',b);state.mjView='book';renderFresh=true;render();window.scrollTo({top:0,behavior:'smooth'});toast(c.name+'을(를) 예약 정보에 담았어요')}return}
   if(d.mjView){state.mjView=d.mjView;renderFresh=true;return render()}
   if(d.jpCopy!==undefined){const t2=jpPhrases()[Number(d.jpCopy)][1];try{await navigator.clipboard.writeText(t2);toast('복사했어요')}catch(e){toast('길게 눌러 복사해 주세요')}return}
   if(d.mjBookPlan!==undefined){const b=mjBook();if(!b.when)return toast('진료 날짜·시간을 먼저 넣어 주세요');const date=b.when.slice(0,10),time=b.when.slice(11,16);
@@ -1963,6 +2031,7 @@ document.addEventListener('change',async e=>{
     if(d.hotelFrom!==undefined)list[i].from=Number(t.value);else list[i].to=Number(t.value);
     if(list[i].from>list[i].to){if(d.hotelFrom!==undefined)list[i].to=list[i].from;else list[i].from=list[i].to}
     await saveSettings({hotels:list,hotel:null});return}
+  if(d.mjSort!==undefined){state.mjSort=t.value;return render()}
   if(d.mj!==undefined){const m=mjDone();m[d.mj]=t.checked;saveLS('mjSteps',m);render();return}
   if(d.ck){const i=state.checklist.find(x=>x.id===d.ck);if(i){const {id,...rest}=i;await writeDoc('checklist',id,{...rest,done:t.checked})}return}
   if(t.id==='exCur') updateExConv();
