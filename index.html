@@ -837,7 +837,7 @@ function pickerHTML(id,ph){
     ${p.manual&&!p.sel?`<div class="warn">목록에 없는 장소예요. 아래 링크로 구글맵에서 장소를 연 다음, <b>주소창의 링크를 통째로 복사</b>해서 붙여넣으면 바로 추가돼요.
       <div class="row" style="margin-top:6px"><input type="text" class="grow" data-pk-coord="${id}" placeholder="구글맵 링크 또는 좌표 붙여넣기"><button class="btn sm" data-pk-coordok="${id}">확인</button></div>
       <a href="${gmapsSearch(p.q)}" target="_blank" rel="noopener">구글맵에서 “${esc(p.q)}” 찾기 ↗</a>
-      <div class="muted" style="margin-top:4px">PC: 주소창 링크를 복사해 붙여넣기 (위 검색칸에 바로 붙여넣어도 돼요). 휴대폰 구글맵 앱: 장소를 길게 눌러 나오는 좌표(예: 43.05461, 141.35365)를 복사해 붙여넣기. 앱의 ‘공유’ 짧은 링크는 위치가 안 담겨 있어서 쓸 수 없어요.</div></div>`:''}
+      <div class="muted" style="margin-top:4px">PC: 주소창 링크를 복사해 붙여넣기 (위 검색칸에 바로 붙여넣어도 돼요). 휴대폰 구글맵 앱: ‘공유 → 복사’한 링크를 위 검색칸에 그대로 붙여넣으면 자동으로 위치를 찾아요. 안 되면 장소 이름을 입력하고 🌐 인터넷에서 위치 찾기를 누르거나, 지도를 길게 눌러 나오는 좌표(예: 43.05461, 141.35365)를 붙여넣어요.</div></div>`:''}
   </div>`;
 }
 function searchPlaces(q){
@@ -849,9 +849,99 @@ function renderSugg(id){
   const p=pickers[id], box=document.querySelector(`[data-pk-sugg="${id}"]`); if(!box) return;
   if(!p.open||!p.q.trim()){box.style.display='none';return}
   const list=searchPlaces(p.q); p.list=list;
+  const web=(p.webQ===p.q.trim()&&p.web)||[];
   box.innerHTML=list.map((x,i)=>`<button data-pk-pick="${id}" data-i="${i}" class="${i===p.hl?'hl':''}">${esc(x.name)}<small>${esc(AREAS[x.area]||'')} · ${esc(x.cat||'내 장소')}</small></button>`).join('')
+    +web.map((x,i)=>`<button data-pk-web="${id}" data-i="${i}">🌐 ${esc(x.name)}<small>${esc(x.sub||'')}</small></button>`).join('')
+    +(p.webBusy&&p.webQ===p.q.trim()?`<button disabled>🌐 인터넷에서 찾는 중…</button>`:(web.length?'':`<button data-pk-websearch="${id}">🌐 “${esc(p.q)}” 인터넷에서 위치 찾기 <small>이름·주소로 좌표 자동</small></button>`))
     +`<button data-pk-manual="${id}">➕ “${esc(p.q)}” 직접 추가하기 <small>좌표 입력</small></button>`;
   box.style.display='block';
+}
+/* ---- 인터넷 위치 찾기 (휴대폰 공유 링크·장소 이름·주소) ---- */
+const geoCache={};
+function withTimeout(pr,ms){return Promise.race([pr,new Promise((_,rj)=>setTimeout(()=>rj(new Error('timeout')),ms))])}
+async function geoNominatim(q){
+  const u='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=jp&accept-language=ko,ja,en&viewbox=139.3,45.6,145.9,41.3&bounded=0&q='+encodeURIComponent(q);
+  const r=await withTimeout(fetch(u,{headers:{'Accept':'application/json'}}),8000); if(!r.ok) return [];
+  const j=await r.json();
+  return j.map(x=>({name:x.name||String(x.display_name||'').split(',')[0],lat:+x.lat,lng:+x.lon,sub:String(x.display_name||'').split(',').slice(1,4).join(',').trim()})).filter(x=>isFinite(x.lat)&&isFinite(x.lng));
+}
+async function geoGSI(q){
+  const r=await withTimeout(fetch('https://msearch.gsi.go.jp/address-search/AddressSearch?q='+encodeURIComponent(q)),8000); if(!r.ok) return [];
+  const j=await r.json();
+  return j.slice(0,6).map(x=>({name:x.properties.title,lat:x.geometry.coordinates[1],lng:x.geometry.coordinates[0],sub:'주소 검색'}));
+}
+function looksAddr(q){return /〒|\d{3}-\d{4}|[都道府県市区町村]|丁目|条|番地|Chome|chōme|Jō|Ward|Hokkaido|홋카이도|삿포로시|구\s/.test(q)}
+async function geoSearch(q){
+  q=String(q||'').trim(); if(!q) return [];
+  if(geoCache[q]) return geoCache[q];
+  let res=[];
+  try{ if(/[一-龯ぁ-んァ-ン]/.test(q)&&looksAddr(q)) res=await geoGSI(q.replace(/〒?\d{3}-\d{4}/,'').trim()) }catch(e){}
+  if(!res.length){ try{ res=await geoNominatim(q) }catch(e){} }
+  if(!res.length&&!/札幌|삿포로|sapporo/i.test(q)){ try{ res=await geoNominatim(q+' 札幌') }catch(e){} }
+  // 홋카이도 결과 우선
+  res.sort((a,b)=>((b.lat>41&&b.lat<46&&b.lng>139&&b.lng<146)?1:0)-((a.lat>41&&a.lat<46&&a.lng>139&&a.lng<146)?1:0));
+  return geoCache[q]=res;
+}
+function coordsFromHTML(h){
+  if(!h) return null;
+  let m=h.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/); if(m) return {lat:+m[1],lng:+m[2]};
+  m=h.match(/center=(-?\d+\.\d+)(?:%2C|,)(-?\d+\.\d+)/); if(m) return {lat:+m[1],lng:+m[2]};
+  m=h.match(/@(-?\d+\.\d{3,}),(-?\d+\.\d{3,})/); if(m) return {lat:+m[1],lng:+m[2]};
+  m=h.match(/ll=(-?\d+\.\d+)(?:%2C|,)(-?\d+\.\d+)/); if(m) return {lat:+m[1],lng:+m[2]};
+  return null;
+}
+async function resolveShortLink(url){
+  const tries=[
+    async()=>{const r=await withTimeout(fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url)),9000);const j=await r.json();return {final:(j.status&&j.status.url)||'',html:j.contents||''}},
+    async()=>{const r=await withTimeout(fetch('https://corsproxy.io/?url='+encodeURIComponent(url)),9000);return {final:r.url||'',html:await r.text()}},
+  ];
+  for(const t of tries){
+    try{
+      const {final,html}=await t();
+      const c=parseCoords(final)||coordsFromHTML(html)||coordsFromHTML(decodeURIComponent(final||''));
+      if(c&&Math.abs(c.lat)<=90&&Math.abs(c.lng)<=180){
+        let name='';const pm=(final||'').match(/\/maps\/place\/([^/@?]+)/);if(pm){try{name=decodeURIComponent(pm[1].replace(/\+/g,' '))}catch(e){}}
+        if(!name){const og=(html||'').match(/property="og:title" content="([^"]+)"/)||(html||'').match(/<title>([^<]+)<\/title>/);if(og)name=og[1].replace(/\s*[-·]\s*Google\s*(지도|マップ|Maps).*$/i,'').trim()}
+        return {...c,name};
+      }
+    }catch(e){}
+  }
+  return null;
+}
+function parseShareText(s){
+  const url=(s.match(/https?:\/\/\S+/)||[''])[0];
+  let lines=s.replace(/https?:\/\/\S+/g,'\n').split(/\n|\r/).map(x=>x.trim()).filter(Boolean);
+  // 한 줄로 붙어 버린 경우: "이름 일본 〒064-0805 주소" → 이름 / 주소로 나누기
+  if(lines.length===1){const m=lines[0].match(/^(.*?)\s*((?:일본|日本|Japan)\s*,?\s*)?(〒\s*\d{3}-?\d{4}.*|\d{3}-\d{4}.*)$/);if(m&&m[1])lines=[m[1].trim(),m[3].trim()]}
+  let name='',addr='';
+  for(const l of lines){ if(!addr&&looksAddr(l)&&lines.length>1&&name) addr=l; else if(!name) name=l; else if(!addr) addr=l }
+  name=name.replace(/^(일본|日本|Japan)\s+/,'');
+  const zip=((addr||name).match(/\d{3}-\d{4}/)||[''])[0];
+  return {url,name,addr,zip};
+}
+async function geoZip(zip){
+  const r=await withTimeout(fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&country=jp&postalcode='+zip),8000);if(!r.ok)return null;
+  const j=await r.json();return j[0]?{lat:+j[0].lat,lng:+j[0].lon}:null;
+}
+async function placeFromShare(id,raw){
+  const p=pickers[id]; const {url,name,addr,zip}=parseShareText(raw);
+  p.q=name||''; p.open=false; p.busy=true; render(); toast('📍 공유 링크에서 위치를 찾는 중이에요…');
+  let hit=null;
+  if(url){ const r=await resolveShortLink(url); if(r) hit={lat:r.lat,lng:r.lng,name:name||r.name} }
+  if(!hit&&name){ const g=await geoSearch(name); if(g[0]) hit={lat:g[0].lat,lng:g[0].lng,name} }
+  if(!hit&&addr&&addr!==name){ const g=await geoSearch(addr.replace(/^(일본|日本|Japan)\s*/,'').replace(/〒\s*\d{3}-?\d{4}\s*,?/,'').trim()); if(g[0]) hit={lat:g[0].lat,lng:g[0].lng,name:name||g[0].name} }
+  if(!hit&&zip){ try{const z=await geoZip(zip); if(z){hit={...z,name:name||('〒'+zip)}; setTimeout(()=>toast('우편번호 근처로 잡았어요. 위치가 조금 다를 수 있어요'),2700)}}catch(e){} }
+  p.busy=false;
+  if(hit){ const pl=await placeFromLink(hit,''); toast(`“${pl.name}” 위치를 찾았어요`); return pickPlace(id,pl) }
+  p.manual=true; p.q=name||''; render();
+  toast(name?'위치를 못 찾았어요. 이름을 조금 바꿔서 🌐 인터넷 검색을 눌러 보세요':'짧은 링크만으로는 위치를 못 찾았어요. 장소 이름을 입력하고 🌐 인터넷 검색을 눌러 주세요');
+}
+async function webSearchPicker(id){
+  const p=pickers[id]; const q=(p.q||'').trim(); if(!q) return;
+  p.webQ=q; p.web=null; p.webBusy=true; p.open=true; renderSugg(id);
+  const res=await geoSearch(q); if(p.webQ!==q) return;
+  p.web=res; p.webBusy=false; p.open=true; renderSugg(id);
+  if(!res.length) toast('인터넷에서도 못 찾았어요. 일본어·영어 이름이나 주소로 다시 해 보세요');
 }
 function pickPlace(id,place){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();const p=pickers[id];p.sel=place;p.q=place.name;p.open=false;p.manual=false;render()}
 
@@ -1707,7 +1797,7 @@ function viewSettings(){
     <ol style="padding-left:18px;margin:0" class="muted"><li>페이지 오른쪽 위의 <b>공유</b>를 눌러요.</li><li>동행인을 초대할 때 <b>편집 가능한 권한</b>(Contributor 이상)을 줘요. 보기 권한만 주면 읽기만 할 수 있어요.</li></ol>
     <p class="muted">현재 상태: <b>${state.mode==='cloud'?(state.readOnly?'보기 전용':'공유 저장 중'):'이 기기에만 저장 중'}</b></p>
   </div>
-  <p class="muted" style="text-align:center">페이지 버전 2026.11.18-21</p>
+  <p class="muted" style="text-align:center">페이지 버전 2026.11.18-22</p>
   ${state.places.length?`<div class="card"><h2>📍 직접 추가한 장소</h2>${state.places.map(p=>`<div class="check"><span class="t">${esc(p.name)} <span class="muted">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></span><button class="icon needwrite" data-place-del="${p.id}">✕</button></div>`).join('')}</div>`:''}`;
 }
 
@@ -1958,6 +2048,8 @@ document.addEventListener('click',async e=>{
   if(d.day){state.day=Number(d.day);render();if(t.classList.contains('daycard')){const el=document.getElementById('dayDetail');if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}return}
   // 장소 선택기
   if(d.pkPick){const p=pickers[d.pkPick];return pickPlace(d.pkPick,p.list[Number(d.i)])}
+  if(d.pkWebsearch){return webSearchPicker(d.pkWebsearch)}
+  if(d.pkWeb){const p=pickers[d.pkWeb];const x=(p.web||[])[Number(d.i)];if(!x)return;const qq=(p.q||'').trim();const nm=(/[가-힣]/.test(qq)&&qq.length>=4)?qq:(x.name||qq);const pl=await placeFromLink({lat:x.lat,lng:x.lng,name:nm},'');toast(`“${pl.name}”을(를) 추가했어요`);return pickPlace(d.pkWeb,pl)}
   if(d.pkManual){const p=pickers[d.pkManual];p.manual=true;p.open=false;return render()}
   if(d.pkClear){const p=pickers[d.pkClear];p.sel=null;p.q='';p.manual=false;return render()}
   if(d.pkCoordok){
@@ -2109,7 +2201,8 @@ document.addEventListener('input',e=>{
   if(d.pkInput){
     const link=parseMapsLink(t.value);
     if(link&&link.lat!=null){const id=d.pkInput;(async()=>{const pl=await placeFromLink(link,'');toast(`구글맵 링크에서 “${pl.name}”을(를) 가져왔어요`);pickPlace(id,pl)})();return}
-    if(link&&link.short){const p=pickers[d.pkInput];p.q='';t.value='';toast('짧은 공유 링크(maps.app.goo.gl)는 위치를 읽을 수 없어요. 브라우저 주소창의 긴 링크를 붙여넣어 주세요');return}
+    if(link&&link.short||/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(t.value)){return placeFromShare(d.pkInput,t.value)}
+    if(link&&link.nocoord){const q=(t.value.match(/[?&](?:q|query)=([^&]+)/)||[])[1];if(q){let nm='';try{nm=decodeURIComponent(q.replace(/\+/g,' '))}catch(e){};const p=pickers[d.pkInput];p.q=nm;t.value=nm;return webSearchPicker(d.pkInput)}}
     const p=pickers[d.pkInput];p.q=t.value;p.open=true;p.hl=0;p.sel=null;p.manual=false;
     // 선택 해제 표시만 갱신
     const pk=t.closest('.picker');const pe=pk&&pk.querySelector('.picked');if(pe)pe.remove();const w=pk&&pk.querySelector('.warn');if(w)w.remove();
