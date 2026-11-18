@@ -152,7 +152,7 @@ nav button b{font-weight:400;margin-right:5px}
   nav button{flex:1 0 54px!important;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 2px!important;font-size:11px!important;border-bottom:0!important;border-top:3px solid transparent}
   nav button b{font-size:19px;margin:0}
   nav button.on{border-top-color:var(--accent)}
-  main{padding-bottom:110px!important;padding-top:0!important;margin-top:-40px;position:relative}
+  main{padding-bottom:110px!important;padding-top:0!important;margin-top:-40px;position:relative;z-index:2}
   header .hero-text{padding-bottom:52px}
   .toast{bottom:90px}
 }
@@ -1246,6 +1246,11 @@ const MJ_STEPS=[
 ];
 function mjDone(){return loadLS('mjSteps',{})}
 function viewMJ(){
+  const sub=state.mjView||'guide';
+  const chips=`<div class="chips" style="margin-bottom:12px"><button class="chip ${sub==='guide'?'on':''}" data-mj-view="guide">📌 가이드</button><button class="chip ${sub==='book'?'on':''}" data-mj-view="book">📅 비대면 진료 예약</button></div>`;
+  return chips+(sub==='book'?viewMJBook():viewMJGuide());
+}
+function viewMJGuide(){
   const done=mjDone(); const cnt=MJ_STEPS.filter((_,i)=>done[i]).length;
   const hs=hotels();
   return `
@@ -1285,6 +1290,52 @@ function viewMJ(){
     <h2>🗓 일정에 넣기</h2>
     <div class="row"><select id="mjDay" style="width:auto">${Array.from({length:dayCount()},(_,i)=>`<option value="${i+1}">${dayLabel(i+1)}</option>`).join('')}</select><input type="time" id="mjTime" style="width:130px"><button class="btn" data-mj-add>💉 진료 일정 추가</button></div>
     <p class="muted" style="margin-bottom:0">예약한 진료 시간을 넣으면 그날 일정에 “마운자로 비대면 진료”가 추가돼요.</p>
+  </div>`;
+}
+
+const MJ_FIELDS=[['clinic','클리닉 이름','예: ○○ 클리닉'],['url','예약 사이트 주소','https://'],['when','진료 날짜·시간',''],['method','진료 방식','LINE 영상통화 / Zoom / 전화'],['no','예약 번호',''],['hotel','배송 받을 숙소',''],['ship','배송 예정일',''],['cost','결제 금액 (엔)','']];
+function mjBook(){return loadLS('mjBook',{})}
+function jpPhrases(){
+  const hs=hotels(); const h=hs[0];
+  return [
+   ['예약 문의 (클리닉)','外国からの短期旅行者ですが、マンジャロのオンライン診療を受けられますか？札幌のホテルへの配送は可能ですか？','외국인 단기 여행자인데 마운자로 비대면 진료가 가능한가요? 삿포로 호텔로 배송되나요?'],
+   ['총비용 확인','診察料・薬代・送料を含めた合計金額を教えてください。','진료비·약값·배송비를 포함한 총액을 알려 주세요.'],
+   ['처방 서류 요청','帰国時の税関用に、英文の処方箋（または処方証明書）と領収書をいただけますか？','귀국 세관용으로 영문 처방전(또는 처방 증명서)과 영수증을 받을 수 있을까요?'],
+   ['호텔에 미리 알리기',`${h?h.name+'に':''}宿泊予定の者です。到着前に医薬品（要冷蔵）の荷物が届く予定です。受け取りと冷蔵保管をお願いできますか？`,'숙박 예정자입니다. 도착 전에 의약품(냉장 필요) 택배가 올 예정인데, 수령과 냉장 보관을 부탁드려도 될까요?'],
+   ['배송지 적는 법','〒(우편번호) 住所 / ホテル名 / 宿泊者名(ローマ字) 様 / チェックイン日: ○月○日','우편번호·주소 / 호텔 이름 / 숙박자 이름(영문) 님 / 체크인 날짜를 꼭 함께 적어요.'],
+  ];
+}
+function viewMJBook(){
+  const b=mjBook(); const filled=MJ_FIELDS.filter(f=>b[f[0]]).length;
+  const q1=encodeURIComponent('일본 마운자로 비대면 진료 한국어 예약'), q2=encodeURIComponent('マンジャロ オンライン診療 外国人 ホテル配送 札幌');
+  return `
+  <div class="card">
+    <h2>📅 비대면 진료 예약하는 법</h2>
+    <ol style="padding-left:20px;margin:0;line-height:1.8">
+      <li><b>클리닉 찾기</b> — 아래 검색 버튼으로 한국어 진료가 되는 일본 클리닉을 찾아요. 후기만 보지 말고 클리닉 공식 사이트에서 확인해요.</li>
+      <li><b>조건 확인</b> — ① 외국인 단기 여행자 진료 가능 ② 진료할 때 일본에 있어야 하는지 ③ 삿포로 호텔 배송 가능 ④ 진료비·배송비 포함 총액 ⑤ 영문 처방전·영수증 발급.</li>
+      <li><b>예약</b> — 사이트에서 ‘온라인 진료(オンライン診療)’ 또는 ‘GLP-1/マンジャロ’ 메뉴를 고르고, 날짜는 일본에 있는 날(11/30~12/3)로 잡아요. 예약은 한국에서 미리 해 둘 수 있어요.</li>
+      <li><b>문진표 작성</b> — 키·몸무게, 지병, 먹는 약, 알레르기 등을 적어요(問診票). 여권 정보를 묻는 곳도 있어요.</li>
+      <li><b>진료</b> — 예약 시간에 LINE·Zoom 영상통화나 전화로 진료받아요. 통역이 붙는 곳도 있어요.</li>
+      <li><b>결제·배송</b> — 카드 결제 후 배송지에 호텔 주소를 적어요. 배송일은 숙소 체크인 기간 안으로 잡아요.</li>
+    </ol>
+    <div class="row" style="margin-top:12px;gap:8px">
+      <a class="btn" style="text-decoration:none" href="https://www.google.com/search?q=${q1}" target="_blank" rel="noopener">🔎 한국어로 클리닉 찾기 ↗</a>
+      <a class="btn sec" style="text-decoration:none" href="https://www.google.com/search?q=${q2}" target="_blank" rel="noopener">🔎 일본어로 찾기 ↗</a>
+    </div>
+    <div class="warn">광고성 글이 많아요. 처방 없이 파는 곳, 해외 직배송·구매대행을 해 준다는 곳은 불법이거나 가짜 약일 수 있으니 피하세요.</div>
+  </div>
+  <div class="card">
+    <h2>📝 내 예약 정보 <span class="muted">${filled}/${MJ_FIELDS.length}</span></h2>
+    <div class="grid2">${MJ_FIELDS.map(([k,l,ph])=>`<div class="field"><label>${l}</label><input type="${k==='when'?'datetime-local':k==='ship'?'date':k==='cost'?'number':'text'}" data-mjb="${k}" value="${esc(b[k]||'')}" placeholder="${esc(ph)}" ${k==='hotel'?'list="mjHotels"':''}></div>`).join('')}</div>
+    <datalist id="mjHotels">${hotels().map(h=>`<option value="${esc(h.name)}">`).join('')}</datalist>
+    ${b.url?`<a class="btn sec sm" style="text-decoration:none" href="${esc(/^https?:\/\//.test(b.url)?b.url:'https://'+b.url)}" target="_blank" rel="noopener">예약 사이트 열기 ↗</a>`:''}
+    <div class="row needwrite" style="margin-top:10px"><button class="btn" data-mj-book-plan>🗓 이 예약을 일정에 넣기</button></div>
+    <p class="muted" style="margin-bottom:0">예약 정보는 지금 쓰는 기기에만 저장돼요. 공개 링크나 동행인 화면에는 보이지 않아요.</p>
+  </div>
+  <div class="card">
+    <h2>🗣 일본어로 보낼 문구</h2>
+    ${jpPhrases().map((ph,i)=>`<div style="padding:10px 0;border-bottom:1px solid #f1f4f8"><div class="row" style="justify-content:space-between"><b>${ph[0]}</b><button class="btn sec sm" data-jp-copy="${i}">복사</button></div><div style="margin-top:4px">${esc(ph[1])}</div><div class="muted">${esc(ph[2])}</div></div>`).join('')}
   </div>`;
 }
 function updateMJ(){
@@ -1477,7 +1528,7 @@ function viewSettings(){
     <ol style="padding-left:18px;margin:0" class="muted"><li>페이지 오른쪽 위의 <b>공유</b>를 눌러요.</li><li>동행인을 초대할 때 <b>편집 가능한 권한</b>(Contributor 이상)을 줘요. 보기 권한만 주면 읽기만 할 수 있어요.</li></ol>
     <p class="muted">현재 상태: <b>${state.mode==='cloud'?(state.readOnly?'보기 전용':'공유 저장 중'):'이 기기에만 저장 중'}</b></p>
   </div>
-  <p class="muted" style="text-align:center">페이지 버전 2026.11.18-16</p>
+  <p class="muted" style="text-align:center">페이지 버전 2026.11.18-17</p>
   ${state.places.length?`<div class="card"><h2>📍 직접 추가한 장소</h2>${state.places.map(p=>`<div class="check"><span class="t">${esc(p.name)} <span class="muted">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></span><button class="icon needwrite" data-place-del="${p.id}">✕</button></div>`).join('')}</div>`:''}`;
 }
 
@@ -1670,7 +1721,7 @@ function render(){
 }
 let renderFresh=true;
 function selectorOf(el){
-  for(const a of ['data-pk-input','data-pk-coord','data-set','data-fl','data-stop-time','data-stop-stay']) if(el.hasAttribute(a)) return `[${a}="${el.getAttribute(a)}"]`;
+  for(const a of ['data-pk-input','data-pk-coord','data-set','data-fl','data-stop-time','data-stop-stay','data-mjb']) if(el.hasAttribute(a)) return `[${a}="${el.getAttribute(a)}"]`;
   return el.id?'#'+el.id:null;
 }
 function updateExConv(){
@@ -1835,6 +1886,12 @@ document.addEventListener('click',async e=>{
   if(d.shareAll!==undefined) return openShareText(0);
   if(d.shareDay!==undefined) return openShareText(state.day);
   if(d.shareCopy!==undefined){const ta=$('#shareText');try{await navigator.clipboard.writeText(ta.value);toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(err){ta.removeAttribute('readonly');ta.focus();ta.select();try{document.execCommand('copy');toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(e2){toast('글을 길게 눌러 전체 선택 후 복사해 주세요')}ta.setAttribute('readonly','')}return}
+  if(d.mjView){state.mjView=d.mjView;renderFresh=true;return render()}
+  if(d.jpCopy!==undefined){const t2=jpPhrases()[Number(d.jpCopy)][1];try{await navigator.clipboard.writeText(t2);toast('복사했어요')}catch(e){toast('길게 눌러 복사해 주세요')}return}
+  if(d.mjBookPlan!==undefined){const b=mjBook();if(!b.when)return toast('진료 날짜·시간을 먼저 넣어 주세요');const date=b.when.slice(0,10),time=b.when.slice(11,16);
+    const st=state.settings.start;let day=1;if(st){day=Math.round((new Date(date)-new Date(st))/864e5)+1}
+    if(day<1||day>dayCount())return toast('진료 날짜가 여행 기간(Day 1~'+dayCount()+') 밖이에요');
+    await writeDoc('stops',uid(),{day,order:nextOrder(day),kind:'note',name:'마운자로 비대면 진료',cat:'기타',time,stay:30,memo:[b.clinic,b.method].filter(Boolean).join(' · '),lat:null,lng:null,area:'',pid:'',placeName:'',modeNext:''});return toast(dayLabel(day)+' 일정에 넣었어요')}
   if(d.mjAdd!==undefined){const day=Number($('#mjDay').value);await writeDoc('stops',uid(),{day,order:nextOrder(day),kind:'note',name:'마운자로 비대면 진료',cat:'기타',time:$('#mjTime').value||'',stay:30,memo:'처방전·영수증 챙기기',lat:null,lng:null,area:'',pid:'',placeName:'',modeNext:''});toast(`${dayLabel(day)} 일정에 넣었어요`);return}
   if(d.auth==='in') return fbLogin();
   if(d.auth==='out'){ try{ await fb.auth.signOut(); }catch(e){} return; }
@@ -1886,6 +1943,7 @@ document.addEventListener('input',e=>{
     if(c&&Math.abs(c.lat)<=90&&Math.abs(c.lng)<=180&&(link||/\d+\.\d{3,}\s*,\s*-?\d+\.\d{3,}/.test(t.value))){
       (async()=>{const p=pickers[id];const pl=await placeFromLink({lat:c.lat,lng:c.lng,name:p.q.trim()||(link&&link.name)||''},p.q.trim());toast(`“${pl.name}” 장소를 추가했어요`);pickPlace(id,pl)})();}
     return}
+  if(d.mjb){const b=mjBook();b[d.mjb]=t.value;saveLS('mjBook',b);return}
   if(['mjPrice','mjQty','mjFee','mjKr'].includes(t.id)) return updateMJ();
   if(t.id==='exAmt'||t.id==='exCur'||t.id==='exRate') return updateExConv();
   if(t.id==='fxJ'){const k=$('#fxK');k.value=t.value?Math.round(Number(t.value)*rate()/100):'';return}
