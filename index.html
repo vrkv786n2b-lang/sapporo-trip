@@ -181,7 +181,7 @@ nav button b{font-weight:400;margin-right:5px}
 <nav id="tabs">
   <button data-tab="plan" class="on"><b>🗓</b><span>일정</span></button>
   <button data-tab="course"><b>⭐</b><span>추천 코스</span></button>
-  <button data-tab="route"><b>📏</b><span>거리</span></button>
+  <button data-tab="mj"><b>💉</b><span>마운자로</span></button>
   <button data-tab="money"><b>💴</b><span>가계부</span></button>
   <button data-tab="check"><b>✅</b><span>준비물</span></button>
   <button data-tab="info"><b>ℹ️</b><span>정보</span></button>
@@ -502,7 +502,7 @@ const state = {
   tab:(location.hash||'').slice(1)||'plan', day:1, readOnly:false, mode:'local', fx:loadLS('fx',{}), isOwner:true,
   calc: loadLS('calc',[]), editingExpense:null,
 };
-const TABS=['plan','course','route','money','check','info','setup'];
+const TABS=['plan','course','mj','route','money','check','info','setup'];
 if(!TABS.includes(state.tab)) state.tab='plan';
 let DB=null;
 function loadLS(k,def){try{const v=localStorage.getItem('sp_'+k);return v?JSON.parse(v):def}catch(e){return def}}
@@ -1230,6 +1230,69 @@ async function addCourse(id,day){
   }
 }
 
+
+/* =========================================================
+   9-2. 탭: 마운자로 처방·반입 가이드 (2026.11.18 기준 정보)
+   ========================================================= */
+const MJ_STEPS=[
+ ['상담','한국에서 의사와 먼저 상담하기','처음 맞는 거라면 본인에게 맞는 약·용량인지 확인하고 시작하는 게 안전해요. (권장)'],
+ ['클리닉','일본 클리닉 고르기','한국어 진료·통역, 외국인(단기 체류자) 진료 가능 여부, 진료비 포함 총비용, 그리고 삿포로 호텔로 배송되는지 꼭 확인해요.'],
+ ['예약','비대면 진료 예약하기','11/12 반입 허용 이후 예약이 크게 몰렸어요. 출발 전에 미리 잡아 두세요. 진료 날짜는 일본에 있는 날(11/30~12/3)로 맞춰요.'],
+ ['진료','일본에서 진료받기','영상통화·전화 진료가 많아요. 여권 정보, 키·몸무게, 복용 중인 약, 지병 등을 물어볼 수 있어요.'],
+ ['수령','약 받기','호텔 배송이면 배송일을 숙소 체크인 기간 안으로 잡고, 프런트에 냉장 보관 가능한지 물어봐요.'],
+ ['서류','처방 서류 챙기기','처방전(가능하면 영문)이나 진료·처방 확인서, 영수증을 꼭 받아서 귀국할 때 약과 함께 가지고 있어요.'],
+ ['보관','냉장 보관하기','숙소 냉장고에 보관하고, 이동할 땐 보냉 파우치·아이스팩을 써요. 얼리면 안 돼요.'],
+ ['귀국','들고 입국하기','본인이 직접 기내에 들고 타요(위탁 수하물 X). 최대 3개월치, 주 1회 펜은 12~13개까지예요.'],
+];
+function mjDone(){return loadLS('mjSteps',{})}
+function viewMJ(){
+  const done=mjDone(); const cnt=MJ_STEPS.filter((_,i)=>done[i]).length;
+  const hs=hotels();
+  return `
+  <div class="card">
+    <h2>💉 마운자로 일본 처방·반입 가이드</h2>
+    <p class="muted" style="margin-top:-4px">2026년 11월 18일 기준 기사·발표 내용이에요. 규정과 가격은 바뀔 수 있으니 출발 전에 다시 확인하세요. 의학적 판단은 진료 의사에게 맡겨 주세요.</p>
+    <div class="row" style="justify-content:space-between"><span class="muted">준비 진행</span><b>${cnt} / ${MJ_STEPS.length}</b></div>
+    <div class="bar" style="margin-top:4px"><i style="width:${cnt/MJ_STEPS.length*100}%;background:var(--ok)"></i></div>
+  </div>
+  <div class="card">
+    <h2>📌 꼭 알아둘 규정</h2>
+    <div class="kv">
+      <b>허용 시작</b><span>2026년 11월 12일부터 해외에서 정상 처방받아 구매한 위고비·마운자로 등 자가치료용 의약품의 휴대 반입이 허용돼요.</span>
+      <b>조건</b><span>본인 치료용 약을 본인이 직접 들고 입국할 때만 해당돼요.</span>
+      <b>반입 한도</b><span>최대 3개월치예요. 주 1회 맞는 마운자로는 12~13개까지예요.</span>
+      <b>안 되는 것</b><span>일본 약국에서 처방 없이 구매, 해외 쇼핑몰 직구·구매대행, 다른 사람 몫 대신 사 오기, 짧은 간격으로 3개월치를 반복해서 들여오기.</span>
+      <b>주의</b><span>해외에서 산 약은 국내 부작용 피해 구제를 받을 수 없어요.</span>
+    </div>
+  </div>
+  <div class="card">
+    <h2>✅ 진행 순서</h2>
+    ${MJ_STEPS.map((st,i)=>`<label class="check ${done[i]?'done':''}" style="align-items:flex-start"><input type="checkbox" data-mj="${i}" ${done[i]?'checked':''} style="margin-top:3px"><span class="t"><span class="tag" style="margin-right:6px">${i+1}. ${st[0]}</span><b>${st[1]}</b><div class="muted" style="margin-top:2px">${st[2]}</div>${i===4&&hs.length?`<div class="muted" style="margin-top:4px">🏨 숙소: ${hs.map(h=>`${esc(h.name)} (${dayLabel(Number(h.from||1)).replace(/^Day \d+ · /,'')}~${dayLabel(Number(h.to||dayCount())).replace(/^Day \d+ · /,'')})`).join(', ')}</div>`:''}</span></label>`).join('')}
+    <p class="muted" style="margin-bottom:0">체크 표시는 지금 쓰는 기기에만 저장돼요.</p>
+  </div>
+  <div class="card">
+    <h2>💴 예상 비용 계산</h2>
+    <div class="grid2">
+      <div class="field"><label>4주분(1박스) 가격 (엔)</label><input type="number" id="mjPrice" value="14800" inputmode="numeric"></div>
+      <div class="field"><label>몇 박스</label><select id="mjQty"><option value="1">1박스 (4주)</option><option value="2">2박스 (8주)</option><option value="3" selected>3박스 (12주, 최대)</option></select></div>
+      <div class="field"><label>진료비·검사비·배송비 (엔)</label><input type="number" id="mjFee" value="0" inputmode="numeric"></div>
+      <div class="field"><label>한국 4주분 가격 (원, 비교용)</label><input type="number" id="mjKr" value="300000" inputmode="numeric"></div>
+    </div>
+    <div class="stats" id="mjOut"></div>
+    <p class="muted" style="margin-bottom:0">공개된 일본 클리닉 가격 예: 2.5㎎ 4주분 약 7,000~15,000엔, 5㎎ 약 22,000~26,000엔 (클리닉·시기마다 달라요). 한국 2.5㎎ 4주분은 약 28만~35만 원 수준이에요. 환율 100엔=${rate().toLocaleString()}원 기준.</p>
+  </div>
+  <div class="card needwrite">
+    <h2>🗓 일정에 넣기</h2>
+    <div class="row"><select id="mjDay" style="width:auto">${Array.from({length:dayCount()},(_,i)=>`<option value="${i+1}">${dayLabel(i+1)}</option>`).join('')}</select><input type="time" id="mjTime" style="width:130px"><button class="btn" data-mj-add>💉 진료 일정 추가</button></div>
+    <p class="muted" style="margin-bottom:0">예약한 진료 시간을 넣으면 그날 일정에 “마운자로 비대면 진료”가 추가돼요.</p>
+  </div>`;
+}
+function updateMJ(){
+  const o=document.getElementById('mjOut'); if(!o) return;
+  const p=Number($('#mjPrice').value)||0,q=Number($('#mjQty').value)||1,f=Number($('#mjFee').value)||0,kr=Number($('#mjKr').value)||0;
+  const jp=p*q+f, jpKrw=jp*rate()/100, krTot=kr*q;
+  o.innerHTML=`<div class="stat"><b>${yen(jp)}</b><span>일본 총액</span></div><div class="stat"><b>${won(jpKrw)}</b><span>원화 환산</span></div><div class="stat"><b style="color:${krTot-jpKrw>=0?'var(--ok)':'var(--accent)'}">${won(Math.abs(krTot-jpKrw))}</b><span>한국 대비 ${krTot-jpKrw>=0?'절약':'추가'}</span></div>`;
+}
 /* =========================================================
    10. 탭: 가계부
    ========================================================= */
@@ -1414,7 +1477,7 @@ function viewSettings(){
     <ol style="padding-left:18px;margin:0" class="muted"><li>페이지 오른쪽 위의 <b>공유</b>를 눌러요.</li><li>동행인을 초대할 때 <b>편집 가능한 권한</b>(Contributor 이상)을 줘요. 보기 권한만 주면 읽기만 할 수 있어요.</li></ol>
     <p class="muted">현재 상태: <b>${state.mode==='cloud'?(state.readOnly?'보기 전용':'공유 저장 중'):'이 기기에만 저장 중'}</b></p>
   </div>
-  <p class="muted" style="text-align:center">페이지 버전 2026.11.17-15</p>
+  <p class="muted" style="text-align:center">페이지 버전 2026.11.18-16</p>
   ${state.places.length?`<div class="card"><h2>📍 직접 추가한 장소</h2>${state.places.map(p=>`<div class="check"><span class="t">${esc(p.name)} <span class="muted">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></span><button class="icon needwrite" data-place-del="${p.id}">✕</button></div>`).join('')}</div>`:''}`;
 }
 
@@ -1591,7 +1654,7 @@ function render(){
   if(VIEWER&&(state.hideTabs||['money','setup']).includes(state.tab)) state.tab='plan';
   if(!VIEWER&&DB&&ownerChecked&&!state.isOwner&&state.tab==='setup') state.tab='plan';
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===state.tab));
-  const views={plan:viewPlan,course:viewCourse,route:viewRoute,money:viewMoney,check:viewCheck,info:viewInfo,setup:viewSettings};
+  const views={plan:viewPlan,course:viewCourse,mj:viewMJ,route:viewRoute,money:viewMoney,check:viewCheck,info:viewInfo,setup:viewSettings};
   // 남아 있던 폼 값 보존 (가계부 입력 중 다른 사람의 변경이 와도 사라지지 않게)
   const saved={}; document.querySelectorAll('#app [id]').forEach(el=>{if(el.tagName==='INPUT'&&el.type!=='checkbox'||el.tagName==='SELECT')saved[el.id]=el.value});
   const savedChecks=[...document.querySelectorAll('.exSplit')].map(c=>[c.value,c.checked]);
@@ -1603,7 +1666,7 @@ function render(){
   renderFresh=false;
   if(keep&&keep.sel){const el=document.querySelector(keep.sel);if(el){if(keep.v!=null&&el.value!==keep.v&&el.type!=='date')el.value=keep.v;el.focus();try{if(keep.s!=null)el.setSelectionRange(keep.s,keep.e)}catch(e){}}}
   for(const id of Object.keys(pickers)) renderSugg(id);
-  updateExConv();
+  updateExConv(); updateMJ();
 }
 let renderFresh=true;
 function selectorOf(el){
@@ -1772,6 +1835,7 @@ document.addEventListener('click',async e=>{
   if(d.shareAll!==undefined) return openShareText(0);
   if(d.shareDay!==undefined) return openShareText(state.day);
   if(d.shareCopy!==undefined){const ta=$('#shareText');try{await navigator.clipboard.writeText(ta.value);toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(err){ta.removeAttribute('readonly');ta.focus();ta.select();try{document.execCommand('copy');toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(e2){toast('글을 길게 눌러 전체 선택 후 복사해 주세요')}ta.setAttribute('readonly','')}return}
+  if(d.mjAdd!==undefined){const day=Number($('#mjDay').value);await writeDoc('stops',uid(),{day,order:nextOrder(day),kind:'note',name:'마운자로 비대면 진료',cat:'기타',time:$('#mjTime').value||'',stay:30,memo:'처방전·영수증 챙기기',lat:null,lng:null,area:'',pid:'',placeName:'',modeNext:''});toast(`${dayLabel(day)} 일정에 넣었어요`);return}
   if(d.auth==='in') return fbLogin();
   if(d.auth==='out'){ try{ await fb.auth.signOut(); }catch(e){} return; }
   if(d.fbClaim!==undefined) return fbClaimOwner();
@@ -1822,6 +1886,7 @@ document.addEventListener('input',e=>{
     if(c&&Math.abs(c.lat)<=90&&Math.abs(c.lng)<=180&&(link||/\d+\.\d{3,}\s*,\s*-?\d+\.\d{3,}/.test(t.value))){
       (async()=>{const p=pickers[id];const pl=await placeFromLink({lat:c.lat,lng:c.lng,name:p.q.trim()||(link&&link.name)||''},p.q.trim());toast(`“${pl.name}” 장소를 추가했어요`);pickPlace(id,pl)})();}
     return}
+  if(['mjPrice','mjQty','mjFee','mjKr'].includes(t.id)) return updateMJ();
   if(t.id==='exAmt'||t.id==='exCur'||t.id==='exRate') return updateExConv();
   if(t.id==='fxJ'){const k=$('#fxK');k.value=t.value?Math.round(Number(t.value)*rate()/100):'';return}
   if(t.id==='fxK'){const j=$('#fxJ');j.value=t.value?Math.round(Number(t.value)*100/rate()):'';return}
@@ -1840,6 +1905,7 @@ document.addEventListener('change',async e=>{
     if(d.hotelFrom!==undefined)list[i].from=Number(t.value);else list[i].to=Number(t.value);
     if(list[i].from>list[i].to){if(d.hotelFrom!==undefined)list[i].to=list[i].from;else list[i].from=list[i].to}
     await saveSettings({hotels:list,hotel:null});return}
+  if(d.mj!==undefined){const m=mjDone();m[d.mj]=t.checked;saveLS('mjSteps',m);render();return}
   if(d.ck){const i=state.checklist.find(x=>x.id===d.ck);if(i){const {id,...rest}=i;await writeDoc('checklist',id,{...rest,done:t.checked})}return}
   if(t.id==='exCur') updateExConv();
 });
