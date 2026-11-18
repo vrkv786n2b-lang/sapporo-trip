@@ -1245,10 +1245,121 @@ const MJ_STEPS=[
  ['귀국','들고 입국하기','본인이 직접 기내에 들고 타요(위탁 수하물 X). 최대 3개월치, 주 1회 펜은 12~13개까지예요.'],
 ];
 function mjDone(){return loadLS('mjSteps',{})}
+/* ---- 루라·클라라 집중 가이드 (2026.11.18 공식 사이트 확인) ---- */
+const MJ_HOTEL={ko:'스스키노 그랑벨 호텔',jp:'すすきのグランベルホテル',zip:'064-0805',addr:'北海道札幌市中央区南5条西2-6-2',near:'남북선 스스키노역 1번 출구 도보 약 3분 · 도호선 호스이스스키노역 5번 출구 도보 약 1분'};
+function mjShipText(){return `〒${MJ_HOTEL.zip}\n${MJ_HOTEL.addr}\n${MJ_HOTEL.jp} フロント気付\n宿泊者名：（パスポートのローマ字氏名） 様\nチェックイン：11月30日 ／ 要冷蔵（医薬品）`}
+let MJCP=[]; function cp(t){MJCP.push(t);return MJCP.length-1}
+const MJ_TOP=[
+ {id:'clara',emoji:'🌸',name:'클라라 뷰티클리닉 삿포로원',jp:'クララビューティクリニック札幌院',
+  addr:'〒060-0806 札幌市北区北6条西4丁目2-7 J1札幌北口ビル 2F',near:'JR 삿포로역 북쪽 출구 바로 건너편 · 도보 1분',hours:'매일 11:00–20:00 (연말연시 휴무)',tel:'011-211-1244',
+  pros:['한국어 안내 페이지가 있고, 상담할 때 번역 도구로 도와줘요','온라인 가격이 국적·거주지와 상관없이 같다고 공식적으로 밝혀요','온라인 진료는 17시까지 결제하면 당일 발송, 보통 2일 안에 도착 (냉장 택배)'],
+  cons:['2개 단위로만 살 수 있어요','다 쓴 펜(바늘 포함)은 클리닉에 반납하거나, 사는 지역 규칙에 따라 버려야 해요 → 한국에서 버려도 되는지 물어보기'],
+  visit:{price:'방문 가격은 LINE으로 문의 (2025년 공지: 2.5mg 1개 3,278엔, 5mg 1개 6,380엔, 2개 단위)',steps:[
+    'LINE 친구 추가 <b>@yoy5225w</b> → “무료 카운슬링 예약”을 보내요 (또는 웹 예약 coubic)',
+    '희망 날짜·시간: 11/30(일) 오후나 12/1(월) 아침처럼 삿포로역 근처에 있을 때로 잡아요',
+    '당일 여권을 들고 J1札幌北口ビル 2층으로 가요 → 문진표 작성 → 의사 진찰',
+    '결제(카드) 후 그 자리에서 펜을 받아요 → 영문 처방 증명서·영수증을 꼭 요청',
+   ]},
+  online:{price:'2.5mg 1개 4,400엔 · 5mg 1개 8,800엔 (진찰료 포함, 2개 단위) + 냉장 배송 3,000엔 (총액 30,000엔 이상이면 무료)',p4:17600+3000,p12:52800,steps:[
+    'LINE <b>@yoy5225w</b>에서 “온라인 진료(オンライン診療)로 마운자로 처방”을 예약 (약 30초)',
+    '예약 시간에 영상통화로 진찰 (약 5분) — 여권, 키·몸무게, 지병·복용 약을 물어볼 수 있어요',
+    '카드 결제: 진료 당일 18시까지',
+    '17시까지 진찰·문진·결제가 끝나면 당일 발송 → 보통 발송 후 2일 도착. 배송지는 아래 그랑벨 호텔 주소',
+   ]},
+  links:[['LINE 예약 (@yoy5225w)','https://line.me/R/ti/p/%40yoy5225w'],['웹 예약 (무료 카운슬링)','https://coubic.com/clarabeauty/254392/express'],['한국어 안내 페이지','https://clarabeautyclinic.jp/sapporo/foreigner/foreigner-korean/'],['마운자로 온라인 안내·가격','https://clarabeautyclinic.jp/sapporo/manjaro-lp/']],
+  ask:'韓国からの旅行者です（11/30〜12/3 札幌滞在）。マンジャロ2.5mgを4本処方していただけますか？\n①来院とオンライン診療、どちらが可能ですか？来院の場合の料金も教えてください。\n②オンラインの場合、韓国にいる間（11/27頃）に診察を受けて、11/30着で札幌のホテルに配送できますか？\n③使用済みのペンは韓国で地域のルールに従って廃棄してもよろしいですか？\n④帰国時の税関用に英文の処方証明書と領収書をいただけますか？',
+  askKo:'한국에서 온 여행자예요(11/30~12/3 삿포로). 마운자로 2.5mg 4개 처방 가능한가요? ①방문과 온라인 중 뭐가 되나요, 방문 가격은요? ②한국에 있을 때(11/27쯤) 진찰받고 11/30에 삿포로 호텔로 받을 수 있나요? ③다 쓴 펜은 한국에서 버려도 되나요? ④세관용 영문 처방 증명서·영수증 받을 수 있나요?'},
+ {id:'lula',emoji:'🌷',name:'루라(LULA) 미용클리닉 삿포로',jp:'ルラ美容クリニック 札幌本院 / 札幌大通り院',
+  addr:'삿포로본원: 삿포로역 도보 1분 · 오도리원: 지하철 오도리역 도보 1분 (정확한 주소는 예약 확인 메일·Hot Pepper 페이지)',near:'두 곳 모두 역에서 1분',hours:'매일 10:00–19:00',tel:'0120-980-222 (대표·일본 국내 무료전화)',
+  pros:['가격이 가장 싸요: 2.5mg 1개월분 10,500엔','방문하면 상담·초진·재진 무료','온라인 진료는 화상 5~10분, 최단 당일 발송'],
+  cons:['한국어 지원이 없어요 (일본어)','온라인은 진찰료 2,200엔 + 배송비가 따로 있고, 회원가입 때 전화번호 인증이 있어요 → 한국 번호로 되는지 확인','첫 처방은 2.5mg부터, 18~50세 대상 (50세 이상은 채혈 11,000엔 필요할 수 있음), 피임약 복용 중이면 처방 불가'],
+  visit:{price:'2.5mg 1개월분 10,500엔 (세금 포함) · 상담·진찰료 무료',steps:[
+    'LINE 예약(쿠폰 있음) 또는 웹 예약에서 <b>札幌本院</b>이나 <b>札幌大通り院</b> 선택 → 메뉴에서 マンジャロ/医療ダイエット 카운슬링',
+    '날짜: 오도리원은 오도리공원·TV타워 일정, 본원은 삿포로역 도착·출발 동선에 붙이기 좋아요',
+    '당일 여권 지참 → 문진표 → 의사 진찰 → 결제 → 펜 수령',
+    '영문 처방 증명서·영수증 요청 (세관용)',
+   ]},
+  online:{price:'2.5mg 1개월분 10,500엔 (3개월 30,300엔) + 진찰료 2,200엔 + 배송비 · 5mg 1개월분 21,500엔',p4:10500+2200,p12:30300+2200,steps:[
+    '온라인 예약 사이트(remocli)에서 マンジャロ를 장바구니에 담기 → “진찰 일시 예약”',
+    '맨 아래 “이용 등록” → 이메일 인증 → 비밀번호 설정',
+    '기본 정보·전화번호 인증·<b>배송지(아래 그랑벨 호텔 주소)</b>·신용카드 입력',
+    '예약 일시·문진표 작성 → 확인 메일 → 예약 시간에 화상 진료 (5~10분) → 발송',
+   ]},
+  links:[['LINE 예약','https://liff.line.me/2007098686-1qJP6jX7/landing?follow=%40798dwydv&lp=rAijeW&liff_id=2007098686-1qJP6jX7'],['웹 예약','https://lula-beauty.b4a.clinic/'],['온라인 진료 예약 (remocli)','https://remocli.com/menu?clid=114'],['온라인 진료 안내·가격','https://www.lula-beauty.jp/online/'],['삿포로본원 (Hot Pepper)','https://clinic.beauty.hotpepper.jp/H000782035/'],['삿포로 오도리원 (Hot Pepper)','https://clinic.beauty.hotpepper.jp/H000736629/']],
+  ask:'韓国からの旅行者です（11/30〜12/3 札幌滞在）。札幌院でマンジャロ2.5mg（1ヶ月分）の処方を受けられますか？\n①外国人旅行者でも処方可能ですか？当日お薬を受け取れますか？\n②オンライン診療の場合、韓国の電話番号で登録できますか？札幌のホテルへの配送は可能ですか？\n③帰国時の税関用に英文の処方証明書と領収書をいただけますか？',
+  askKo:'한국 여행자예요(11/30~12/3 삿포로). 삿포로원에서 마운자로 2.5mg 1개월분 처방되나요? ①외국인 여행자도 되고 당일 받을 수 있나요? ②온라인이면 한국 번호로 가입되나요, 삿포로 호텔 배송 되나요? ③세관용 영문 처방 증명서·영수증 받을 수 있나요?'},
+];
+function viewMJTop(){
+  const ship=mjShipText();
+  return `
+  <div class="card">
+    <h2>⭐ 루라 · 클라라 집중 정리</h2>
+    <p class="muted" style="margin-top:-4px">2026년 11월 18일 두 클리닉 공식 사이트에서 확인한 내용이에요. 가격·조건은 바뀔 수 있으니 예약 전에 LINE으로 꼭 다시 물어보세요. 처방 여부와 용량은 의사가 정해요.</p>
+    <div style="overflow-x:auto"><table style="min-width:520px"><tr><th></th><th>🌸 클라라</th><th>🌷 루라</th></tr>
+      <tr><td><b>위치</b></td><td>삿포로역 북쪽 출구 1분</td><td>삿포로역 1분 / 오도리역 1분</td></tr>
+      <tr><td><b>한국어</b></td><td>✅ 한국어 안내 · 번역 도구 상담</td><td>— 일본어</td></tr>
+      <tr><td><b>4개(2.5mg) 온라인</b></td><td>${yen(20600)} <span class="muted">(17,600+배송 3,000)</span><div class="muted">≈${won(20600*rate()/100)}</div></td><td>${yen(12700)}+배송비 <span class="muted">(10,500+진찰 2,200)</span><div class="muted">≈${won(12700*rate()/100)}+α</div></td></tr>
+      <tr><td><b>12개(3개월) 온라인</b></td><td>${yen(52800)} <span class="muted">(배송 무료)</span></td><td>${yen(32500)}+배송비</td></tr>
+      <tr><td><b>방문</b></td><td>가능 · 가격은 문의</td><td>가능 · 10,500엔, 진찰 무료</td></tr>
+      <tr><td><b>운영</b></td><td>매일 11–20시</td><td>매일 10–19시</td></tr>
+    </table></div>
+  </div>
+  <div class="card">
+    <h2>🧭 이번 일정에 맞는 추천 순서</h2>
+    <div class="kv">
+      <b>1순위</b><span><b>방문 진료</b> — 둘 다 삿포로역에서 1분이라 <b>11/30(월) 도착한 날 오후</b>나 <b>12/1(화) 오전</b>에 들르면 그 자리에서 받을 수 있어요. 배송 기다릴 필요가 없어 3박 4일 일정에 가장 안전해요.</span>
+      <b>2순위</b><span><b>비대면 진료 + 호텔 배송</b> — 발송 후 약 2일이 걸리니 <b>11/27(금) 17시(일본 시간)까지</b> 진찰·결제를 끝내야 11/30에 호텔에서 받을 수 있어요. 한국에 있을 때 진찰이 되는지 먼저 물어보세요.</span>
+      <b>먼저 할 일</b><span>오늘~내일 두 곳 LINE에 아래 문의 문구를 보내고, 답이 좋은 곳으로 정해요.</span>
+    </div>
+  </div>
+  <div class="card">
+    <h2>🏨 비대면 진료 배송지</h2>
+    <div class="kv">
+      <b>호텔</b><span>${MJ_HOTEL.ko} (${MJ_HOTEL.jp})</span>
+      <b>주소</b><span>〒${MJ_HOTEL.zip} ${MJ_HOTEL.addr}</span>
+      <b>가는 길</b><span>${MJ_HOTEL.near}</span>
+      <b>받는 날</b><span>체크인하는 <b>11/30</b>로 지정 (냉장 택배). 체크인 전에 도착할 수 있으니 호텔에 미리 알려 두세요.</span>
+    </div>
+    <pre style="white-space:pre-wrap;background:#f6f8fb;border-radius:10px;padding:10px;margin:10px 0;font-family:inherit;font-size:14px">${esc(ship)}</pre>
+    <div class="row" style="gap:6px"><button class="btn sm" data-cp="${cp(ship)}">📋 배송지 복사</button><button class="btn sec sm" data-cp="${cp(`${MJ_HOTEL.jp}に11月30日から宿泊予定の者です。チェックイン前に医薬品（要冷蔵・クール便）の荷物が届く予定です。お受け取りと冷蔵保管をお願いできますでしょうか。宿泊者名：（ローマ字氏名）`)}">📋 호텔에 보낼 문구</button>
+    <a class="btn sec sm" style="text-decoration:none" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(MJ_HOTEL.jp+' '+MJ_HOTEL.addr)}" target="_blank" rel="noopener">🗺 지도 ↗</a></div>
+    <p class="muted" style="margin-bottom:0">“(ローマ字氏名)”은 여권에 적힌 영문 이름으로 바꿔 적어요. 호텔 문구 뜻: 11/30부터 숙박 예정인데, 체크인 전에 냉장 의약품 택배가 오니 받아서 냉장 보관 부탁드려요.</p>
+  </div>
+  ${MJ_TOP.map(c=>`<div class="card">
+    <h2 style="margin-bottom:2px">${c.emoji} ${esc(c.name)}</h2><div class="muted">${esc(c.jp)}</div>
+    <div class="kv" style="margin-top:10px">
+      <b>주소</b><span>${esc(c.addr)}</span><b>위치</b><span>${esc(c.near)}</span><b>운영</b><span>${esc(c.hours)}</span><b>전화</b><span>${esc(c.tel)}</span>
+      <b>좋은 점</b><span>${c.pros.map(esc).join('<br>')}</span>
+      <b>확인할 점</b><span>${c.cons.map(esc).join('<br>')}</span>
+    </div>
+    <h3 style="margin:14px 0 4px">🚶 방문 진료 예약하기</h3>
+    <div class="muted">${esc(c.visit.price)}</div>
+    <ol style="padding-left:20px;margin:6px 0;line-height:1.7">${c.visit.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+    <h3 style="margin:14px 0 4px">📱 비대면 진료 예약하기 (호텔 배송)</h3>
+    <div class="muted">${esc(c.online.price)} · 4개 총 ${yen(c.online.p4)}${c.id==='lula'?'+배송비':''} ≈ ${won(c.online.p4*rate()/100)}</div>
+    <ol style="padding-left:20px;margin:6px 0;line-height:1.7">${c.online.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px">${c.links.map(([l,u])=>`<a class="btn sec sm" style="text-decoration:none" href="${u}" target="_blank" rel="noopener">${esc(l)} ↗</a>`).join('')}<a class="btn sec sm" style="text-decoration:none" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.id==='clara'?'クララビューティクリニック札幌院':'ルラ美容クリニック 札幌')}" target="_blank" rel="noopener">🗺 지도 ↗</a></div>
+    <div style="margin-top:12px;padding:10px;background:#f6f8fb;border-radius:10px">
+      <div class="row" style="justify-content:space-between"><b>💬 LINE으로 보낼 문의 (일본어)</b><button class="btn sm" data-cp="${cp(c.ask)}">복사</button></div>
+      <div style="white-space:pre-wrap;margin-top:6px;font-size:14px">${esc(c.ask)}</div>
+      <div class="muted" style="margin-top:6px">${esc(c.askKo)}</div>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-mj-pick="${c.id}">📝 내 예약 정보에 담기</button></div>
+  </div>`).join('')}
+  <div class="card">
+    <h2>🎒 받은 뒤 챙길 것</h2>
+    <div class="kv">
+      <b>서류</b><span>영문 처방 증명서(또는 처방전)와 영수증 — 귀국할 때 약과 함께 기내에 들고 타요.</span>
+      <b>보관</b><span>호텔 냉장고에 보관, 공항 이동 땐 보냉 파우치. 얼리면 안 돼요.</span>
+      <b>한도</b><span>본인용 최대 3개월치(주 1회 펜 12~13개). 위탁 수하물 말고 직접 들고 타요.</span>
+    </div>
+  </div>`;
+}
 function viewMJ(){
-  const sub=state.mjView||'guide';
-  const chips=`<div class="chips" style="margin-bottom:12px"><button class="chip ${sub==='guide'?'on':''}" data-mj-view="guide">📌 가이드</button><button class="chip ${sub==='book'?'on':''}" data-mj-view="book">📅 비대면 진료 예약</button><button class="chip ${sub==='clinic'?'on':''}" data-mj-view="clinic">🏥 클리닉 비교</button></div>`;
-  return chips+(sub==='book'?viewMJBook():sub==='clinic'?viewMJClinics():viewMJGuide());
+  MJCP=[];
+  const sub=state.mjView||'top';
+  const chips=`<div class="chips" style="margin-bottom:12px"><button class="chip ${sub==='top'?'on':''}" data-mj-view="top">⭐ 루라·클라라</button><button class="chip ${sub==='guide'?'on':''}" data-mj-view="guide">📌 가이드</button><button class="chip ${sub==='book'?'on':''}" data-mj-view="book">📝 예약 메모</button><button class="chip ${sub==='clinic'?'on':''}" data-mj-view="clinic">🏥 전체 비교</button></div>`;
+  return chips+(sub==='book'?viewMJBook():sub==='clinic'?viewMJClinics():sub==='guide'?viewMJGuide():viewMJTop());
 }
 function viewMJGuide(){
   const done=mjDone(); const cnt=MJ_STEPS.filter((_,i)=>done[i]).length;
@@ -1297,8 +1408,8 @@ function viewMJGuide(){
 /* 클리닉 비교 데이터 (2026.11.17~18 공개 정보 기준, 바뀔 수 있음) */
 const MJ_CLINICS=[
  {id:'ys',name:'유신내과클리닉',jp:'ゆうしん内科クリニック',kind:'both',where:'삿포로 주오구 미나미20조 니시16초메 · 노면전차 로프웨이이리구치 도보 약 5분',lang:'한국어 예약 페이지 · 진료는 영어/일본어',ko:1,p4:null,p4t:'사이트에 가격 미표시 → 문의',p12:null,fee:'0엔(약·용량 정해진 경우) / 상담 5,500엔',ship:'배송 2,500엔 · 호텔 배송은 체크인 약 1주 전 주문 · 클리닉 직접 수령 가능',lead:'방문 시 예약 없이 당일 진료',leadDays:0,cert:'세관 제출용 진단서 3,300엔',hours:'월·화·목·금 9:10–11:45, 14:40–16:45 / 수·토 오전만 / 일·공휴일 휴진',fit:'good',url:'https://www.ys-med.com/diet/ko/mounjaro/',src:'공식 사이트(한국어)'},
- {id:'lula',name:'루라(LULA) 미용클리닉 삿포로',jp:'ルラ美容クリニック 札幌本院・札幌大通り院',kind:'both',where:'삿포로본원: 삿포로역 도보 1분 · 오도리원: 오도리역 도보 1분',lang:'일본어 · 외국인 여행자 처방 가능 여부 확인 필요',ko:0,p4:10500,p4t:'2.5mg 1개월분 10,500엔(세금 포함) · 공식 가격표에 2.5mg만 표시',p12:null,fee:'상담·초진·재진료 0엔',ship:'원내 처방(방문 수령) · 온라인 처방도 있음',lead:'LINE/웹 예약 후 방문',leadDays:0,cert:'확인 필요',hours:'매일 10:00–19:00',fit:'check',url:'https://lula-beauty.jp/price/',src:'공식 가격표(11/18 확인)'},
- {id:'clara',name:'클라라 뷰티클리닉 삿포로',jp:'クララビューティクリニック札幌院',kind:'visit',where:'삿포로역 북쪽 출구 도보 1분 (J1 札幌北口ビル 2층)',lang:'한국어 안내 페이지 있음 · 상담은 번역 도구로 지원',ko:1,p4:13112,p4t:'2.5mg 1개 3,278엔(세금 포함) · 2개 단위 판매 → 4개 13,112엔 / 5mg 1개 6,380엔',p12:null,fee:'카운슬링 무료',ship:'원내 처방(방문 수령) · ⚠️ 다 쓴 펜(바늘 포함)은 클리닉에 직접 가져와 반납하는 것이 원칙 → 귀국하는 여행자는 가능한지 꼭 문의',lead:'LINE(@yoy5225w)·웹 예약 후 방문',leadDays:0,cert:'확인 필요',hours:'매일 11:00–20:00 (연말연시 휴무)',fit:'check',url:'https://clarabeautyclinic.jp/sapporo/foreigner/foreigner-korean/',src:'공식 사이트(11/18 확인)'},
+ {id:'lula',name:'루라(LULA) 미용클리닉 삿포로',jp:'ルラ美容クリニック 札幌本院・札幌大通り院',kind:'both',where:'삿포로본원: 삿포로역 도보 1분 · 오도리원: 오도리역 도보 1분 · 온라인 진료(호텔 배송)도 가능',lang:'일본어',ko:0,p4:12700,p4t:'2.5mg 1개월분 10,500엔 (방문은 진찰 무료 / 온라인은 진찰료 2,200엔+배송비)',p12:32500,fee:'방문 0엔 · 온라인 2,200엔',ship:'방문 당일 수령 또는 호텔 배송(최단 당일 발송)',lead:'방문 당일 / 온라인은 발송 후 배송 기간',leadDays:0,cert:'확인 필요',hours:'매일 10:00–19:00',fit:'good',url:'https://www.lula-beauty.jp/online/',src:'공식 사이트(11/18 확인)'},
+ {id:'clara',name:'클라라 뷰티클리닉 삿포로',jp:'クララビューティクリニック札幌院',kind:'both',where:'삿포로역 북쪽 출구 도보 1분 (J1札幌北口ビル 2층) · 온라인 진료(호텔 배송)도 가능',lang:'한국어 안내 페이지 · 상담은 번역 도구로 지원',ko:1,p4:20600,p4t:'온라인 2.5mg 1개 4,400엔(진찰료 포함, 2개 단위) → 4개 17,600엔 + 냉장 배송 3,000엔',p12:52800,fee:'포함',ship:'방문 수령 또는 호텔 냉장 배송 (17시까지 결제 시 당일 발송, 보통 2일 도착) · 3만 엔 이상 배송 무료',lead:'방문 당일 / 온라인은 발송 후 약 2일',leadDays:2,cert:'확인 필요',hours:'매일 11:00–20:00 (연말연시 휴무)',fit:'good',url:'https://clarabeautyclinic.jp/sapporo/manjaro-lp/',src:'공식 사이트(11/18 확인)'},
  {id:'east',name:'이스트에키마에 클리닉 삿포로원',jp:'イースト駅前クリニック札幌院',kind:'both',where:'삿포로역 지하 직결(아스티45)',lang:'일본어 · 외국인 여행자 진료 가능 여부 확인 필요',ko:0,p4:24400,p4t:'월 24,400엔(첫 달 19,400엔~)',p12:null,fee:'초진 0엔(처방 없으면 3,300엔)',ship:'방문 수령 · 온라인 진료도 있음',lead:'방문 당일',leadDays:0,cert:'확인 필요',hours:'연중무휴',fit:'good',url:'',src:'일본 비교 기사(2026)'},
  {id:'ssc',name:'SSC 뷰티클리닉',jp:'SSCビューティークリニック',kind:'both',where:'삿포로역 북쪽 출구 지하보도 13번 출구 도보 1분',lang:'일본어 · 외국인 진료 여부 확인 필요',ko:0,p4:22000,p4t:'1개 5,500엔(2.5mg) · 4개 22,000엔 + 진찰료 2,000엔',p12:null,fee:'진찰료 2,000엔',ship:'원내 처방 · 1개 단위 구매 가능',lead:'방문 당일(예약 권장)',leadDays:0,cert:'확인 필요',hours:'화–토 10:00–18:00 (월·일·공휴일 휴진)',fit:'good',url:'https://sscbeauty.com/',src:'일본 비교 기사(2026)'},
  {id:'slim',name:'슬림클리닉 삿포로점',jp:'スリムクリニック 札幌',kind:'visit',where:'삿포로 시내',lang:'확인 필요',ko:0,p4:10700,p4t:'4개 10,700엔(방문)',p12:null,fee:'확인 필요',ship:'방문 수령',lead:'방문(예약 확인)',leadDays:0,cert:'확인 필요',hours:'확인 필요',fit:'check',url:'',src:'Weblio케어 기사(11/17)'},
@@ -1369,8 +1480,8 @@ function jpPhrases(){
    ['예약 문의 (클리닉)','外国からの短期旅行者ですが、マンジャロのオンライン診療を受けられますか？札幌のホテルへの配送は可能ですか？','외국인 단기 여행자인데 마운자로 비대면 진료가 가능한가요? 삿포로 호텔로 배송되나요?'],
    ['총비용 확인','診察料・薬代・送料を含めた合計金額を教えてください。','진료비·약값·배송비를 포함한 총액을 알려 주세요.'],
    ['처방 서류 요청','帰国時の税関用に、英文の処方箋（または処方証明書）と領収書をいただけますか？','귀국 세관용으로 영문 처방전(또는 처방 증명서)과 영수증을 받을 수 있을까요?'],
-   ['호텔에 미리 알리기',`${h?h.name+'に':''}宿泊予定の者です。到着前に医薬品（要冷蔵）の荷物が届く予定です。受け取りと冷蔵保管をお願いできますか？`,'숙박 예정자입니다. 도착 전에 의약품(냉장 필요) 택배가 올 예정인데, 수령과 냉장 보관을 부탁드려도 될까요?'],
-   ['배송지 적는 법','〒(우편번호) 住所 / ホテル名 / 宿泊者名(ローマ字) 様 / チェックイン日: ○月○日','우편번호·주소 / 호텔 이름 / 숙박자 이름(영문) 님 / 체크인 날짜를 꼭 함께 적어요.'],
+   ['호텔에 미리 알리기',`すすきのグランベルホテルに11月30日から宿泊予定の者です。到着前に医薬品（要冷蔵）の荷物が届く予定です。受け取りと冷蔵保管をお願いできますか？`,'숙박 예정자입니다. 도착 전에 의약품(냉장 필요) 택배가 올 예정인데, 수령과 냉장 보관을 부탁드려도 될까요?'],
+   ['배송지 (스스키노 그랑벨 호텔)','〒064-0805 北海道札幌市中央区南5条西2-6-2 すすきのグランベルホテル フロント気付 / 宿泊者名(ローマ字) 様 / チェックイン: 11月30日','배송지는 스스키노 그랑벨 호텔이에요. 숙박자 영문 이름과 체크인 날짜를 꼭 함께 적어요.'],
   ];
 }
 function viewMJBook(){
@@ -1596,7 +1707,7 @@ function viewSettings(){
     <ol style="padding-left:18px;margin:0" class="muted"><li>페이지 오른쪽 위의 <b>공유</b>를 눌러요.</li><li>동행인을 초대할 때 <b>편집 가능한 권한</b>(Contributor 이상)을 줘요. 보기 권한만 주면 읽기만 할 수 있어요.</li></ol>
     <p class="muted">현재 상태: <b>${state.mode==='cloud'?(state.readOnly?'보기 전용':'공유 저장 중'):'이 기기에만 저장 중'}</b></p>
   </div>
-  <p class="muted" style="text-align:center">페이지 버전 2026.11.18-20</p>
+  <p class="muted" style="text-align:center">페이지 버전 2026.11.18-21</p>
   ${state.places.length?`<div class="card"><h2>📍 직접 추가한 장소</h2>${state.places.map(p=>`<div class="check"><span class="t">${esc(p.name)} <span class="muted">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></span><button class="icon needwrite" data-place-del="${p.id}">✕</button></div>`).join('')}</div>`:''}`;
 }
 
@@ -1957,6 +2068,7 @@ document.addEventListener('click',async e=>{
   if(d.mjFilter){state.mjFilter=d.mjFilter;return render()}
   if(d.mjPick){const c=MJ_CLINICS.find(x=>x.id===d.mjPick);if(c){const b=mjBook();b.clinic=c.name;if(c.url)b.url=c.url;saveLS('mjBook',b);state.mjView='book';renderFresh=true;render();window.scrollTo({top:0,behavior:'smooth'});toast(c.name+'을(를) 예약 정보에 담았어요')}return}
   if(d.mjView){state.mjView=d.mjView;renderFresh=true;return render()}
+  if(d.cp!==undefined){const t2=MJCP[Number(d.cp)];try{await navigator.clipboard.writeText(t2);toast('복사했어요')}catch(e){toast('길게 눌러 복사해 주세요')}return}
   if(d.jpCopy!==undefined){const t2=jpPhrases()[Number(d.jpCopy)][1];try{await navigator.clipboard.writeText(t2);toast('복사했어요')}catch(e){toast('길게 눌러 복사해 주세요')}return}
   if(d.mjBookPlan!==undefined){const b=mjBook();if(!b.when)return toast('진료 날짜·시간을 먼저 넣어 주세요');const date=b.when.slice(0,10),time=b.when.slice(11,16);
     const st=state.settings.start;let day=1;if(st){day=Math.round((new Date(date)-new Date(st))/864e5)+1}
