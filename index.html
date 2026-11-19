@@ -694,18 +694,40 @@ async function publishSnapshot(){
   if(btn){btn.disabled=false;btn.textContent='🌐 공개 링크 업데이트'}
 }
 
+/* 12/1 투어 일정 자동 반영 (한 번만) */
+let tourApplying=false;
+async function maybeAutoTour(){
+  try{
+    if(tourApplying||state.readOnly) return;
+    if(FB&&!(subLoaded.has('stops')&&subLoaded.has('settings'))) return;
+    if(FB&&!(fbState.user&&ownerChecked&&(state.isOwner||fbApproved()))) return;
+    if(!FB&&DB&&!(subLoaded.has('stops')&&subLoaded.has('settings'))) return;
+    if(!state.settings.start) return;
+    let day=0; for(let i=1;i<=dayCount();i++) if(dayDate(i)==='2026-12-01') day=i;
+    if(!day) return;
+    const ex=stopsOf(day);
+    const done=ex.some(x=>x.pid==='harutour-meet')&&ex.some(x=>x.pid==='aoiike');
+    if(done){ saveLS('tourApplied','v2'); return; }
+    if(loadLS('tourApplied','')==='v2') return;
+    tourApplying=true;
+    for(const x of ex) await deleteDoc('stops',x.id);
+    await addCourse('harutour',day); saveLS('tourApplied','v2');
+    toast('12/1 비에이 투어 일정을 넣었어요');
+  }catch(e){} finally{ tourApplying=false; }
+}
+const subLoaded=new Set();
 function subscribeAll(once){
   once=once||(()=>{});
   DB.doc('admin/fx').onSnapshot(s=>{ state.fx=s.exists?{...s.data()}:{}; render(); },()=>{});
   DB.doc('trip/settings').onSnapshot(s=>{
     state.settings = {...(s.exists? s.data() : {}), ...(pendingSettings||{})};
-    if(!s.metadata.fromCache) once('settings');
+    if(!s.metadata.fromCache){ once('settings'); subLoaded.add('settings'); maybeAutoTour(); }
     render();
   },e=>{ once('settings'); });
   for(const c of COLLS){
     DB.collection(c).onSnapshot(q=>{
       state[c]=q.docs.map(d=>({...d.data(),id:d.id}));
-      if(!q.metadata.fromCache) once(c);
+      if(!q.metadata.fromCache){ once(c); subLoaded.add(c); if(c==='stops') maybeAutoTour(); }
       render();
     },e=>{ once(c); if(e&&e.code==='revoked') setSync('off','연결 끊김'); });
   }
@@ -742,7 +764,7 @@ function applyRole(){
   if(state.isOwner&&!fbState.membersUnsub){
     fbState.membersUnsub=fb.fs.collection('members').onSnapshot(q=>{fbState.members=q.docs.map(d=>({...d.data(),uid:d.id}));render()},()=>{});
   } else if(!state.isOwner&&fbState.membersUnsub){ fbState.membersUnsub(); fbState.membersUnsub=null; fbState.members=[]; }
-  renderAuth(); render();
+  renderAuth(); render(); maybeAutoTour();
 }
 function renderAuth(){
   let b=document.getElementById('authBtn');
@@ -824,7 +846,7 @@ function fbMembersCard(){
     <p class="muted" style="margin-bottom:0">승인된 사람은 일정·가계부·체크리스트를 고칠 수 있어요. 설정, 환율, 승인 관리는 관리자만 할 수 있어요.</p></div>`;
 }
 
-const APP_VER='2026.11.19-6';
+const APP_VER='2026.11.19-7';
 /* 공개 링크: 새 버전이 올라오면 자동으로 새로고침 (휴대폰 캐시 때문에 옛 화면이 보이는 문제 해결) */
 async function checkAppUpdate(){
   if(!(FB||VIEWER)||!/^https?:/.test(location.protocol)) return;
@@ -1417,15 +1439,16 @@ function viewRoute(){
    ========================================================= */
 // [장소 id, 체류(분), 메모]
 const COURSES=[
- {id:'harutour',t:'✅ 비에이 버스투어 (하루하루투어 · 예약 완료)',tags:['예약 완료','12월 겨울 코스','투어 버스'],fixed:true,start:'07:10',
-  d:'12~2월 겨울 코스 기준. 오도리역 31번 출구 옆 주차장에서 7:30 정시 출발, 삿포로 도착 17:30~18:30. 중간 시각은 체류 시간으로 계산한 예상이고 현지 사정으로 바뀔 수 있어요.',
+ {id:'harutour',t:'✅ 비에이 버스투어 (하루하루투어 · 예약 완료)',tags:['예약 완료','12/1','투어 버스'],fixed:true,start:'07:10',
+  d:'오도리역 31번 출구 옆 주차장에서 7:30 정시 출발, 삿포로 도착 17:30~18:30. 중간 시각은 체류 시간으로 계산한 예상이고 현지 사정으로 바뀔 수 있어요.',
   s:[['harutour-meet',20,'7:30 정시 출발 · 20분 전 집합 · 늦으면 노쇼(환불 불가) · 가이드에게 예약자 이름 확인 후 탑승 · 처음 앉은 자리가 끝까지 내 자리','07:10'],
-     ['xmas-tree',30,'일찍 도착해서 덜 붐벼요','10:10'],
+     ['xmas-tree',30,'한산할 때 도착해서 사진 찍기 좋아요','10:10'],
      ['biei-st',70,'점심 자유식 · 준페이/다이마루 예약은 당일 가이드에게 (현금, 투어비 불포함)','10:55'],
-     ['shikisai',60,'눈썰매 500엔(불포함) · 가이드가 미리 예약받아요','12:25'],
-     ['takushinkan',30,'자작나무길 사진 포인트','13:40'],
-     ['shirahige',30,'빨간 자판기 앞이 사진 포인트','14:45'],
-     ['susukino',0,'스스키노에서 하차 가능 → 그랑벨 호텔까지 도보 · 삿포로 도착 17:30~18:30','17:30']]},
+     ['aoiike',30,'설경 속 청의 호수','12:45'],
+     ['shirahige',30,'얼음으로 물든 폭포 · 빨간 자판기 앞이 사진 포인트','13:30'],
+     ['takushinkan',30,'탁신관 & 자작나무길 사진 포인트','14:35'],
+     ['shikisai',40,'눈썰매 500엔(불포함, 눈썰매장 개장 시기는 현지 상황에 따라 결정)','15:15'],
+     ['susukino',0,'스스키노에서 하차 → 그랑벨 호텔까지 도보 · 삿포로 도착 17:30~18:30','']]},
  {id:'arrival',t:'도착일: 삿포로역·오도리·스스키노',tags:['도착일 추천','시내','가볍게'],start:'',d:'공항에서 JR로 삿포로역까지 온 뒤 숙소에 짐을 맡기고 가볍게 도는 코스. 저녁엔 오도리 공원 일루미네이션과 라멘으로 마무리해요.',
   s:[['sapporo-st',30,'숙소에 짐 맡기기'],['akarenga',30,''],['clock',20,''],['tvtower',40,'전망대'],['odori',40,'11월 말부터 화이트 일루미네이션'],['tanuki',60,'드럭스토어·기념품'],['ramen-yokocho',50,'저녁 라멘']]},
  {id:'city',t:'삿포로 시내 하루',tags:['하루','시내','야경'],start:'09:00',d:'장외시장 해산물 아침 → 홋카이도 신궁 → 시로이 코이비토 파크 → 모이와야마 야경 → 징기스칸 저녁.',
@@ -2448,7 +2471,7 @@ document.addEventListener('mousedown',e=>{if(e.target.closest('.sugg'))e.prevent
 window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(TABS.includes(h)&&h!==state.tab){state.tab=h;renderFresh=true;render()}});
 
 /* 시작 */
-loadLocal(); render(); initDB();
+loadLocal(); render(); initDB().then(()=>maybeAutoTour());
 </script>
 </body>
 </html>
