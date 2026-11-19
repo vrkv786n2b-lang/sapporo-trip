@@ -821,7 +821,20 @@ function fbMembersCard(){
     <p class="muted" style="margin-bottom:0">승인된 사람은 일정·가계부·체크리스트를 고칠 수 있어요. 설정, 환율, 승인 관리는 관리자만 할 수 있어요.</p></div>`;
 }
 
+const APP_VER='2026.11.19-5';
+/* 공개 링크: 새 버전이 올라오면 자동으로 새로고침 (휴대폰 캐시 때문에 옛 화면이 보이는 문제 해결) */
+async function checkAppUpdate(){
+  if(!(FB||VIEWER)||!/^https?:/.test(location.protocol)) return;
+  try{
+    const r=await fetch(location.pathname+'?ver='+Date.now(),{cache:'no-store'}); if(!r.ok) return;
+    const t=await r.text(); const m=t.match(/const APP_VER='([^']+)'/); if(!m||m[1]===APP_VER) return;
+    const key='sp_reloadedFor'; if(sessionStorage.getItem(key)===m[1]) return;
+    sessionStorage.setItem(key,m[1]);
+    const u=new URL(location.href); u.searchParams.set('v',m[1]); location.replace(u.toString());
+  }catch(e){}
+}
 async function initDB(){
+  checkAppUpdate(); document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkAppUpdate()});
   if(FB) return initFirebase();
   if(VIEWER){ state.readOnly=true; state.isOwner=false; document.body.classList.add('ro','viewer'); setSync('wait','불러오는 중'); await loadSnapshot();
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadSnapshot(true)}); setInterval(()=>loadSnapshot(true),300000); return; }
@@ -931,7 +944,7 @@ function renderSugg(id){
   const web=(p.webQ===p.q.trim()&&p.web)||[];
   box.innerHTML=list.map((x,i)=>`<button data-pk-pick="${id}" data-i="${i}" class="${i===p.hl?'hl':''}">${esc(x.name)}<small>${esc(AREAS[x.area]||'')} · ${esc(x.cat||'내 장소')}</small></button>`).join('')
     +web.map((x,i)=>`<button data-pk-web="${id}" data-i="${i}">🌐 ${esc(x.name)}<small>${esc(x.sub||'')}</small></button>`).join('')
-    +(p.webBusy&&p.webQ===p.q.trim()?`<button disabled>🌐 인터넷에서 찾는 중…</button>`:(web.length?'':`<button data-pk-websearch="${id}">🌐 “${esc(p.q)}” 인터넷에서 위치 찾기 <small>이름·주소로 좌표 자동</small></button>`))
+    +(p.webBusy&&p.webQ===p.q.trim()?`<button disabled>🌐 인터넷 지도에서 찾는 중…</button>`:(web.length?'':(p.webQ===p.q.trim()&&p.web?`<button disabled>🌐 인터넷 지도에도 없어요 <small>일본어·영어 이름으로 쳐 보거나 직접 추가(플러스 코드)</small></button>`:`<button data-pk-websearch="${id}">🌐 “${esc(p.q)}” 인터넷에서 위치 찾기 <small>이름·주소로 좌표 자동</small></button>`)))
     +`<button data-pk-manual="${id}">➕ “${esc(p.q)}” 직접 추가하기 <small>좌표 입력</small></button>`;
   box.style.display='block';
 }
@@ -950,11 +963,43 @@ async function geoGSI(q){
   return j.slice(0,6).map(x=>({name:x.properties.title,lat:x.geometry.coordinates[1],lng:x.geometry.coordinates[0],sub:'주소 검색'}));
 }
 function looksAddr(q){return /〒|\d{3}-\d{4}|[都道府県市区町村]|丁目|条|番地|Chome|chōme|Jō|Ward|Hokkaido|홋카이도|삿포로시|구\s/.test(q)}
+const KO_PLACE={'Chuo Ward':'주오구','Kita Ward':'기타구','Higashi Ward':'히가시구','Shiroishi Ward':'시로이시구','Toyohira Ward':'도요히라구','Minami Ward':'미나미구','Nishi Ward':'니시구','Atsubetsu Ward':'아쓰베쓰구','Teine Ward':'테이네구','Kiyota Ward':'기요타구','Sapporo':'삿포로','Otaru':'오타루','Chitose':'치토세','Asahikawa':'아사히카와','Biei':'비에이','Furano':'후라노','Hakodate':'하코다테','Tokyo':'도쿄','Osaka':'오사카'};
+function koPlace(t){return String(t||'').split(' · ').map(x=>KO_PLACE[x]||x).join(' · ')}
+async function geoPhoton(q){
+  const u='https://photon.komoot.io/api/?limit=7&lat=43.06&lon=141.35&q='+encodeURIComponent(q);
+  const r=await withTimeout(fetch(u),8000); if(!r.ok) return [];
+  const j=await r.json();
+  return (j.features||[]).filter(f=>(f.properties||{}).countrycode==='JP').map(f=>{const p=f.properties;return {name:p.name||p.street||'',lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],sub:koPlace([p.district||p.locality,p.city||p.county].filter(Boolean).join(' · '))}}).filter(x=>x.name);
+}
+const trCache={};
+async function koToJa(q){
+  if(trCache[q]!==undefined) return trCache[q];
+  try{
+    const r=await withTimeout(fetch('https://api.mymemory.translated.net/get?langpair=ko|ja&q='+encodeURIComponent(q)),7000);
+    const j=await r.json(); let t=(j.responseData&&j.responseData.translatedText)||'';
+    if(!t||/[가-힣]/.test(t)||/MYMEMORY|QUERY LENGTH/i.test(t)) t='';
+    return trCache[q]=t.trim();
+  }catch(e){ return trCache[q]='' }
+}
+function jaVariants(t){
+  const AREA='(札幌駅前|札幌駅|札幌|大通公園|大通|すすきの|ススキノ|狸小路|新千歳空港|空港|小樽|駅前|中央|北口|南口)';
+  const out=[t], add=v=>{v=v.replace(/\s+/g,' ').trim(); if(v&&v.length>=2&&!out.includes(v)) out.push(v)};
+  let v=t.replace(new RegExp('\\s*'+AREA+'?\\s*(本店|支店|店|本院|院|館)$'),''); add(v);
+  add(v.replace(new RegExp('^'+AREA+'\\s*'),'').replace(new RegExp('\\s*'+AREA+'$'),''));
+  add(v.replace(/(観覧車|展望台|展望室|ラーメン|らーめん|カフェ|レストラン|本館|スープカレー)$/,''));
+  add(t.split(/[\s　]/)[0]);
+  return out;
+}
 async function geoSearch(q){
   q=String(q||'').trim(); if(!q) return [];
   if(geoCache[q]) return geoCache[q];
   let res=[];
   try{ if(/[一-龯ぁ-んァ-ン]/.test(q)&&looksAddr(q)) res=await geoGSI(q.replace(/〒?\d{3}-\d{4}/,'').trim()) }catch(e){}
+  if(!res.length&&/[가-힣]/.test(q)){ // 한국어 → 일본어로 바꿔서 찾기
+    const ja=await koToJa(q);
+    if(ja){ for(const v of jaVariants(ja)){ try{ res=await geoPhoton(v) }catch(e){} if(res.length) break; }
+      if(!res.length){ try{ res=await geoNominatim(ja) }catch(e){} } } }
+  if(!res.length){ try{ res=await geoPhoton(q) }catch(e){} }
   if(!res.length){ try{ res=await geoNominatim(q) }catch(e){} }
   if(!res.length&&!/札幌|삿포로|sapporo/i.test(q)){ try{ res=await geoNominatim(q+' 札幌') }catch(e){} }
   // 홋카이도 결과 우선
@@ -1047,12 +1092,12 @@ async function placeFromShare(id,raw){
   p.manual=true; p.q=name||''; render();
   toast('공유 링크로는 위치를 못 찾았어요. 구글맵 장소 정보의 ⊕ 플러스 코드(예: 3CXX+X8 삿포로)를 복사해 붙여넣어 주세요');
 }
-async function webSearchPicker(id){
+async function webSearchPicker(id,auto){
   const p=pickers[id]; const q=(p.q||'').trim(); if(!q) return;
-  p.webQ=q; p.web=null; p.webBusy=true; p.open=true; renderSugg(id);
+  p.webQ=q; p.web=null; p.webBusy=true; if(!auto) p.open=true; renderSugg(id);
   const res=await geoSearch(q); if(p.webQ!==q) return;
-  p.web=res; p.webBusy=false; p.open=true; renderSugg(id);
-  if(!res.length) toast('인터넷에서도 못 찾았어요. 일본어·영어 이름이나 주소로 다시 해 보세요');
+  p.web=res; p.webBusy=false; if(!auto) p.open=true; renderSugg(id);
+  if(!res.length&&!auto) toast('인터넷에서도 못 찾았어요. 일본어·영어 이름이나 주소로 다시 해 보세요');
 }
 function pickPlace(id,place){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();const p=pickers[id];p.sel=place;p.q=place.name;p.open=false;p.manual=false;render()}
 
@@ -1908,7 +1953,7 @@ function viewSettings(){
     <ol style="padding-left:18px;margin:0" class="muted"><li>페이지 오른쪽 위의 <b>공유</b>를 눌러요.</li><li>동행인을 초대할 때 <b>편집 가능한 권한</b>(Contributor 이상)을 줘요. 보기 권한만 주면 읽기만 할 수 있어요.</li></ol>
     <p class="muted">현재 상태: <b>${state.mode==='cloud'?(state.readOnly?'보기 전용':'공유 저장 중'):'이 기기에만 저장 중'}</b></p>
   </div>
-  <p class="muted" style="text-align:center">페이지 버전 2026.11.19-2</p>
+  <p class="muted" style="text-align:center">페이지 버전 ${APP_VER}</p>
   ${state.places.length?`<div class="card"><h2>📍 직접 추가한 장소</h2>${state.places.map(p=>`<div class="check"><span class="t">${esc(p.name)} <span class="muted">${p.lat.toFixed(4)}, ${p.lng.toFixed(4)}</span></span><button class="icon needwrite" data-place-del="${p.id}">✕</button></div>`).join('')}</div>`:''}`;
 }
 
@@ -2160,7 +2205,7 @@ document.addEventListener('click',async e=>{
   // 장소 선택기
   if(d.pkPick){const p=pickers[d.pkPick];return pickPlace(d.pkPick,p.list[Number(d.i)])}
   if(d.pkWebsearch){return webSearchPicker(d.pkWebsearch)}
-  if(d.pkWeb){const p=pickers[d.pkWeb];const x=(p.web||[])[Number(d.i)];if(!x)return;const qq=(p.q||'').trim();const nm=(/[가-힣]/.test(qq)&&qq.length>=4)?qq:(x.name||qq);const pl=await placeFromLink({lat:x.lat,lng:x.lng,name:nm},'');toast(`“${pl.name}”을(를) 추가했어요`);return pickPlace(d.pkWeb,pl)}
+  if(d.pkWeb){const p=pickers[d.pkWeb];const x=(p.web||[])[Number(d.i)];if(!x)return;const qq=(p.q||'').trim();const nm=(/[가-힣]/.test(qq)&&qq.length>=3)?(x.name&&!/[가-힣]/.test(x.name)?qq+' · '+x.name:qq):(x.name||qq);const pl=await placeFromLink({lat:x.lat,lng:x.lng,name:nm},'');toast(`“${pl.name}”을(를) 추가했어요`);return pickPlace(d.pkWeb,pl)}
   if(d.pkManual){const p=pickers[d.pkManual];p.manual=true;p.open=false;return render()}
   if(d.pkClear){const p=pickers[d.pkClear];p.sel=null;p.q='';p.manual=false;return render()}
   if(d.pkCoordok){
@@ -2324,7 +2369,10 @@ document.addEventListener('input',e=>{
     const p=pickers[d.pkInput];p.q=t.value;p.open=true;p.hl=0;p.sel=null;p.manual=false;
     // 선택 해제 표시만 갱신
     const pk=t.closest('.picker');const pe=pk&&pk.querySelector('.picked');if(pe)pe.remove();const w=pk&&pk.querySelector('.warn');if(w)w.remove();
-    return renderSugg(d.pkInput)}
+    renderSugg(d.pkInput);
+    clearTimeout(p.autoT); const qq=t.value.trim();
+    if(qq.length>=2&&!/^https?:/i.test(qq)) p.autoT=setTimeout(()=>{ if(pickers[d.pkInput]&&pickers[d.pkInput].q.trim()===qq&&pickers[d.pkInput].open) webSearchPicker(d.pkInput,true) },800);
+    return}
   if(d.fl){
     const [k,f]=d.fl.split('.');
     if(f==='no') applyFlightNo(k,t.value,false);
