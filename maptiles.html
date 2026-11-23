@@ -1,0 +1,5 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>tiles</title><style>html,body{margin:0;padding:0;background:#fff;overflow:hidden}img{position:absolute;width:256px;height:256px;display:block}</style></head><body><script>
+const q=new URLSearchParams(location.search);const z=+q.get('z'),x0=+q.get('x0'),x1=+q.get('x1'),y0=+q.get('y0'),y1=+q.get('y1');
+let n=0,t=(x1-x0+1)*(y1-y0+1);
+for(let x=x0;x<=x1;x++)for(let y=y0;y<=y1;y++){const i=new Image();i.onload=i.onerror=()=>{if(++n===t)document.title='done'};i.src=`https://tile.openstreetmap.org/${z}/${x}/${y}.png`;i.style.left=(x-x0)*256+'px';i.style.top=(y-y0)*256+'px';document.body.appendChild(i)}
+</script></body></html>
