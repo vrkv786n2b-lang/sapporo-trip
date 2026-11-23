@@ -156,6 +156,18 @@ nav button b{font-weight:400;margin-right:5px}
   header .hero-text{padding-bottom:52px}
   .toast{bottom:90px}
 }
+.lmap.on{height:380px;border-radius:12px;overflow:hidden;z-index:0}
+.lmap-wrap.full{position:fixed;inset:0;z-index:1000;background:#fff;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.lmap-wrap.full .lmap.on{flex:1;height:auto;border-radius:0}
+.lmap-wrap.full .lmap-bar{padding:8px 12px}
+body.mapfull{overflow:hidden}
+body.mapfull nav{display:none!important}
+.lmap-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:12px}
+.lpin b{display:flex;width:30px;height:30px;border-radius:50%;background:#14213d;color:#fff;font-weight:900;font-size:13px;align-items:center;justify-content:center;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);box-sizing:border-box}
+.lpin b.v{background:#d7263d}
+.leaflet-tooltip{font-weight:700;font-size:12px}
+.item.flash>.stop{animation:flash 1.6s ease}
+@keyframes flash{0%,40%{background:#fff3c4;box-shadow:0 0 0 3px #f6c84c}100%{}}
 </style>
 </head>
 <body>
@@ -854,7 +866,7 @@ function fbMembersCard(){
     <p class="muted" style="margin-bottom:0">승인된 사람은 일정·가계부·체크리스트를 고칠 수 있어요. 설정, 환율, 승인 관리는 관리자만 할 수 있어요.</p></div>`;
 }
 
-const APP_VER='2026.11.23-3';
+const APP_VER='2026.11.23-5';
 /* 공개 링크: 새 버전이 올라오면 자동으로 새로고침 (휴대폰 캐시 때문에 옛 화면이 보이는 문제 해결) */
 async function checkAppUpdate(){
   if(!(FB||VIEWER)||!/^https?:/.test(location.protocol)) return;
@@ -1148,6 +1160,69 @@ const JR_LINES=[
 const TOWNS=[['삿포로',43.0686,141.3507],['오타루',43.1979,140.9937],['신치토세 공항',42.7875,141.681],['아사히카와',43.7627,142.3586],['비에이',43.5885,142.467],['후라노',43.342,142.383],['노보리베츠',42.4960,141.1450],['하코다테',41.7735,140.7265],['니세코',42.862,140.699],['도야호',42.564,140.819],['조잔케이',42.968,141.163],['토마코마이',42.64,141.6],['구시로',42.98,144.38],['오비히로',42.92,143.2],['왓카나이',45.41,141.67]];
 const SUBWAY_ROUTES={N:['kita24','kita12','sapporo','odori','susukino','nakajima','hiragishi','makomanai'],T:['miyanosawa','nijuyon','maruyama','nishi18','nishi11','odori','buscenter','shinsapporo'],H:['sakaemachi','kanjo','sapporo','odori','hosui','fukuzumi']};
 
+
+/* ---- 실제 지도 (공개 링크에서 Leaflet + OpenStreetMap) ---- */
+const LIVE_MAP=!!(typeof window!=='undefined'&&window.__FB__);
+const BASEMAPS=[['hk',9,455,186,5,3],['sap10',10,912,375,4,3],['sap12',12,3655,1503,5,3],['sap13',13,7310,3006,5,3],['core14',14,14624,6015,3,3],['otaru14',14,14607,6006,4,3],['biei11',11,1834,747,2,3]];
+let leafLoading=null;
+function loadLeaflet(){
+  if(window.L) return Promise.resolve(window.L);
+  if(leafLoading) return leafLoading;
+  leafLoading=new Promise((res,rej)=>{
+    const c=document.createElement('link');c.rel='stylesheet';c.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(c);
+    const sc=document.createElement('script');sc.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';sc.onload=()=>window.L?res(window.L):rej();sc.onerror=()=>{leafLoading=null;rej()};document.head.appendChild(sc);
+  });
+  return leafLoading;
+}
+function buildLeaflet(el){
+  if(el.dataset.ready) return;
+  el.dataset.ready='1';
+  loadLeaflet().then(L=>{
+    const d=JSON.parse(el.dataset.sig);
+    el.innerHTML='';el.classList.add('on');
+    const m=L.map(el,{zoomControl:true,attributionControl:true,scrollWheelZoom:true,tap:true});
+    let fails=0,gsi=false;
+    const osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap contributors'}).addTo(m);
+    osm.on('tileerror',()=>{if(++fails>3&&!gsi){gsi=true;m.removeLayer(osm);L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',{maxZoom:18,attribution:'地理院タイル'}).addTo(m)}});
+    const ll=d.p.map(q=>[q.a,q.o]);
+    for(let i=0;i<ll.length-1;i++){
+      const k=d.m[i]||'walk';
+      L.polyline([ll[i],ll[i+1]],{color:'#fff',weight:9,opacity:.85}).addTo(m);
+      L.polyline([ll[i],ll[i+1]],{color:MODE_HEX[k]||'#7c879c',weight:5,dashArray:k==='walk'?'2 9':null,lineCap:'round'}).addTo(m);
+    }
+    // 같은 자리에 겹친 핀은 살짝 비켜서 표시
+    const seen={};
+    d.p.forEach((q,i)=>{
+      const key=q.a.toFixed(4)+','+q.o.toFixed(4); const nth=seen[key]=(seen[key]||0)+1;
+      const off=nth>1?(nth-1)*14:0;
+      const icon=L.divIcon({className:'lpin',html:`<b class="${q.v?'v':''}" style="${off?`transform:translate(${off}px,-${off}px)`:''}">${esc(q.l)}</b>`,iconSize:[30,30],iconAnchor:[15,15]});
+      L.marker([q.a,q.o],{icon,zIndexOffset:1000-i}).addTo(m).bindTooltip(`${esc(q.l)}. ${esc(q.n)}`,{direction:'top',offset:[0,-14]}).on('click',()=>focusStop(q.id));
+    });
+    if(ll.length===1) m.setView(ll[0],15); else m.fitBounds(ll,{padding:[36,36],maxZoom:16});
+    el._lm=m;
+  }).catch(()=>{delete el.dataset.ready});
+}
+function focusStop(id){
+  if(!id) return;
+  const it=document.querySelector(`.item[data-sid="${id}"]`); if(!it) return;
+  const full=document.querySelector('.lmap-wrap.full'); if(full) toggleFullMap(full);
+  it.scrollIntoView({behavior:'smooth',block:'center'});
+  it.classList.remove('flash'); void it.offsetWidth; it.classList.add('flash');
+}
+function toggleFullMap(w){
+  w.classList.toggle('full'); document.body.classList.toggle('mapfull',w.classList.contains('full'));
+  const b=w.querySelector('[data-lmap-full]'); if(b) b.textContent=w.classList.contains('full')?'✕ 닫기':'⛶ 크게 보기';
+  const el=w.querySelector('.lmap'); if(el&&el._lm) setTimeout(()=>el._lm.invalidateSize(),60);
+}
+function hydrateMaps(old){
+  document.querySelectorAll('#app .lmap').forEach(el=>{
+    if(el.dataset.ready) return;
+    const o=old[el.dataset.sig];
+    if(o&&o._lm){ delete old[el.dataset.sig]; el.replaceWith(o); setTimeout(()=>o._lm.invalidateSize(),0); return; }
+    buildLeaflet(el);
+  });
+  for(const o of Object.values(old)){try{o._lm.remove()}catch(e){}}
+}
 function gmapsAll(pts){return 'https://www.google.com/maps/dir/'+pts.map(p=>p.lat.toFixed(5)+','+p.lng.toFixed(5)).join('/')}
 function mapSVG(pts,segModes){
   if(!pts.length) return `<div class="empty" style="background:#eef3f9;border-radius:12px">장소를 추가하면 여기에 동선이 그려져요 🗺</div>`;
@@ -1168,6 +1243,15 @@ function mapSVG(pts,segModes){
   const z=Math.max(3,Math.min(18,Math.floor(Math.log2(sc/256))+1)),n=2**z,ts=sc/n;
   const tx0=Math.floor((cx-W/2/sc)*n),tx1=Math.floor((cx+W/2/sc)*n),ty0=Math.max(0,Math.floor((cy-H/2/sc)*n)),ty1=Math.min(n-1,Math.floor((cy+H/2/sc)*n));
   let tiles='';
+  if(!LIVE_MAP){
+    // 미리보기(Claude 안)에서는 외부 지도를 못 불러와서, 미리 받아 둔 지역 지도 이미지를 깔아요
+    const vx0=cx-W/2/sc,vx1=cx+W/2/sc,vy0=cy-H/2/sc,vy1=cy+H/2/sc;
+    const bm=BASEMAPS.map(([k,bz,x0,y0,nx,ny])=>{const N=2**bz;return {k,bz,a:x0/N,b:(x0+nx)/N,c:y0/N,d:(y0+ny)/N}})
+      .filter(m=>m.a<vx1&&m.b>vx0&&m.c<vy1&&m.d>vy0)
+      .filter(m=>sc/(256*2**m.bz)<6) // 너무 크게 늘어나는 저해상도 지도는 빼기
+      .sort((p,q)=>p.bz-q.bz);
+    tiles=bm.map(m=>`<image href="basemaps/${m.k}.jpg" x="${(W/2+(m.a-cx)*sc).toFixed(1)}" y="${(H/2+(m.c-cy)*sc).toFixed(1)}" width="${((m.b-m.a)*sc).toFixed(1)}" height="${((m.d-m.c)*sc).toFixed(1)}" preserveAspectRatio="none"/>`).join('');
+  } else
   for(let tx=tx0;tx<=tx1;tx++)for(let ty=ty0;ty<=ty1;ty++){const xx=((tx%n)+n)%n;tiles+=`<image href="https://tile.openstreetmap.org/${z}/${xx}/${ty}.png" data-g="https://cyberjapandata.gsi.go.jp/xyz/std/${z}/${xx}/${ty}.png" x="${(W/2+(tx/n-cx)*sc).toFixed(1)}" y="${(H/2+(ty/n-cy)*sc).toFixed(1)}" width="${(ts+.6).toFixed(1)}" height="${(ts+.6).toFixed(1)}" preserveAspectRatio="none" onerror="if(this.dataset.g&&!this.dataset.f){this.dataset.f=1;this.setAttribute('href',this.dataset.g)}else this.remove()"/>`}
   const poly=arr=>arr.map(([la,ln])=>`${X(ln).toFixed(1)},${Y(la).toFixed(1)}`).join(' ');
   // 1) 바다·육지
@@ -1194,15 +1278,17 @@ function mapSVG(pts,segModes){
   }
   const placed=[];
   const showLabel=(x,y)=>{if(placed.some(q=>Math.abs(q[0]-x)<90&&Math.abs(q[1]-y)<16))return false;placed.push([x,y]);return true};
-  const pins=pts.map((p,i)=>`<g><circle cx="${X(p.lng)}" cy="${Y(p.lat)}" r="12" fill="${p.virtual?'#d7263d':'#14213d'}" stroke="#fff" stroke-width="2.5"/><text x="${X(p.lng)}" y="${Y(p.lat)+4}" text-anchor="middle" font-size="11" font-weight="900" fill="#fff">${p.virtual?'✈':i+1}</text>${showLabel(X(p.lng),Y(p.lat))?`<text x="${X(p.lng)+15}" y="${Y(p.lat)-8}" font-size="12" font-weight="700" fill="#14213d" paint-order="stroke" stroke="#fff" stroke-width="4">${esc(p.name.length>14?p.name.slice(0,13)+'…':p.name)}</text>`:''}</g>`).join('');
+  let pk=0;const plabel=pts.map(p=>p.virtual?'✈':String(++pk));
+  const pins=pts.map((p,i)=>`<g><circle cx="${X(p.lng)}" cy="${Y(p.lat)}" r="12" fill="${p.virtual?'#d7263d':'#14213d'}" stroke="#fff" stroke-width="2.5"/><text x="${X(p.lng)}" y="${Y(p.lat)+4}" text-anchor="middle" font-size="11" font-weight="900" fill="#fff">${plabel[i]}</text>${showLabel(X(p.lng),Y(p.lat))?`<text x="${X(p.lng)+15}" y="${Y(p.lat)-8}" font-size="12" font-weight="700" fill="#14213d" paint-order="stroke" stroke="#fff" stroke-width="4">${esc(p.name.length>14?p.name.slice(0,13)+'…':p.name)}</text>`:''}</g>`).join('');
   const kmPerPx=40075*Math.cos(((minLat+maxLat)/2)*Math.PI/180)/sc; const target=[0.1,0.2,0.5,1,2,5,10,20,50,100].find(v=>v/kmPerPx>60)||100;
   const bar=target/kmPerPx;
-  return `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="동선 지도">
+  const live=LIVE_MAP?(()=>{const d={p:pts.map((q,i)=>({a:+q.lat.toFixed(6),o:+q.lng.toFixed(6),n:q.name,l:plabel[i],v:!!q.virtual,id:q.virtual?'':(q.id||'')})),m:segModes};return {sig:JSON.stringify(d),d}})():null;
+  return `${live?`<div class="lmap-wrap"><div class="lmap" data-sig="${esc(live.sig)}">`:''}<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="동선 지도">
     <g>${base}${ctxSvg}</g>${tiles}${g}${pins}
     <text x="${W-6}" y="${H-6}" text-anchor="end" font-size="9" fill="#5f6b82" paint-order="stroke" stroke="#fff" stroke-width="3">© OpenStreetMap contributors</text>
     <g transform="translate(14,${H-16})"><rect x="-6" y="-12" width="${bar+56}" height="22" rx="6" fill="#fff" opacity=".8"/><line x1="0" y1="0" x2="${bar}" y2="0" stroke="#5f6b82" stroke-width="2"/><line x1="0" y1="-4" x2="0" y2="4" stroke="#5f6b82"/><line x1="${bar}" y1="-4" x2="${bar}" y2="4" stroke="#5f6b82"/><text x="${bar+6}" y="4" font-size="11" fill="#5f6b82">${target<1?target*1000+'m':target+'km'}</text></g>
     <text x="${W-12}" y="18" text-anchor="end" font-size="11" font-weight="700" fill="#5f6b82" paint-order="stroke" stroke="#fff" stroke-width="3">N ↑</text>
-  </svg>
+  </svg>${live?`</div><div class="lmap-bar"><span class="muted">두 손가락으로 확대·축소, 핀을 누르면 그 일정으로 이동해요</span><button class="btn sm sec" data-lmap-full>⛶ 크게 보기</button></div></div>`:''}
   <div class="legend">${Object.entries(MODES).filter(([k])=>k!=='none').map(([k,m])=>`<span><i style="background:${MODE_HEX[k]}"></i>${m.l}</span>`).join('')}<span><i style="background:#9aa6b8"></i>JR 노선</span>${span<0.25?Object.values(LINES).map(l=>`<span><i style="background:${l.c};opacity:.5"></i>${l.n}</span>`).join(''):''}</div>
   ${pts.length>1?`<div style="margin-top:6px"><a class="btn sec sm" style="display:inline-block;text-decoration:none" href="${gmapsAll(pts)}" target="_blank" rel="noopener">🗺 구글맵에서 실제 지도로 전체 경로 보기 ↗</a></div>`:`<div style="margin-top:6px"><a class="btn sec sm" style="display:inline-block;text-decoration:none" href="https://www.google.com/maps/search/?api=1&query=${pts[0].lat},${pts[0].lng}" target="_blank" rel="noopener">🗺 구글맵에서 보기 ↗</a></div>`}`;
 }
@@ -2349,7 +2435,9 @@ function render(){
   // 남아 있던 폼 값 보존 (가계부 입력 중 다른 사람의 변경이 와도 사라지지 않게)
   const saved={}; document.querySelectorAll('#app [id]').forEach(el=>{if(el.tagName==='INPUT'&&el.type!=='checkbox'||el.tagName==='SELECT')saved[el.id]=el.value});
   const savedChecks=[...document.querySelectorAll('.exSplit')].map(c=>[c.value,c.checked]);
+  const oldMaps={}; document.querySelectorAll('#app .lmap[data-ready]').forEach(el=>{if(el._lm)oldMaps[el.dataset.sig]=el});
   $('#app').innerHTML=views[state.tab]();
+  hydrateMaps(oldMaps);
   if(!renderFresh){
     for(const [id,v] of Object.entries(saved)){const el=document.getElementById(id);if(el&&v!==''&&!(id==='calcDay'))el.value=v}
     savedChecks.forEach(([v,c])=>{const el=[...document.querySelectorAll('.exSplit')].find(x=>x.value===v);if(el)el.checked=c});
@@ -2540,6 +2628,7 @@ document.addEventListener('click',async e=>{
   if(d.shareCopy!==undefined){const ta=$('#shareText');try{await navigator.clipboard.writeText(ta.value);toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(err){ta.removeAttribute('readonly');ta.focus();ta.select();try{document.execCommand('copy');toast('복사했어요. 카톡에 붙여넣어 주세요')}catch(e2){toast('글을 길게 눌러 전체 선택 후 복사해 주세요')}ta.setAttribute('readonly','')}return}
   if(d.mjFilter){state.mjFilter=d.mjFilter;return render()}
   if(d.mjPick){const c=MJ_CLINICS.find(x=>x.id===d.mjPick);if(c){const b=mjBook();b.clinic=c.name;if(c.url)b.url=c.url;saveLS('mjBook',b);state.mjView='book';renderFresh=true;render();window.scrollTo({top:0,behavior:'smooth'});toast(c.name+'을(를) 예약 정보에 담았어요')}return}
+  if(d.lmapFull!==undefined){const w=t.closest('.lmap-wrap');if(w)toggleFullMap(w);return}
   if(d.shopView){state.shopView=d.shopView;renderFresh=true;return render()}
   if(d.shopPrep!==undefined){if(state.readOnly)return toast('보기 전용이에요');const have=new Set(state.checklist.map(i=>i.text));let o=Date.now(),n=0;for(const t of SHOP_PREP){if(have.has(t))continue;await writeDoc('checklist',uid(),{cat:'쇼핑',text:t,done:false,who:'',order:o++});n++}return toast(n?`준비물 쇼핑 목록에 ${n}개 담았어요`:'이미 다 담겨 있어요')}
   if(d.shopCat){state.shopCat=d.shopCat;renderFresh=true;return render()}
