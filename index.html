@@ -710,7 +710,21 @@ async function publishSnapshot(){
 /* 12/1 투어 일정 자동 반영 (한 번만) */
 let tourApplying=false;
 const TOUR_PIDS=['harutour-meet','xmas-tree','biei-st','aoiike','shirahige','takushinkan','shikisai','susukino'];
+let tlApplying=false;
+async function maybeAutoTravelog(){
+  if(tlApplying||state.readOnly) return;
+  if(loadLS('tlPrep','')==='v1') return;
+  if(FB&&!(subLoaded.has('checklist')&&fbState.user&&ownerChecked&&state.isOwner)) return;
+  if(!FB&&DB&&!subLoaded.has('checklist')) return;
+  tlApplying=true;
+  try{
+    const have=new Set(state.checklist.map(i=>i.text)); let o=Date.now(),n=0;
+    for(const [cat,t] of TRAVELOG_PREP){ if(have.has(t)) continue; await writeDoc('checklist',uid(),{cat,text:t,done:false,who:'',order:o++}); n++; }
+    saveLS('tlPrep','v1'); if(n) toast(`준비물에 트래블로그 체크 ${n}개를 넣었어요`);
+  }catch(e){} finally{ tlApplying=false; }
+}
 async function maybeAutoTour(){
+  maybeAutoTravelog();
   if(tourApplying||state.readOnly) return;
   if(FB&&!(subLoaded.has('stops')&&subLoaded.has('settings'))) return;
   if(FB&&!(fbState.user&&ownerChecked&&(state.isOwner||fbApproved()))) return;
@@ -747,7 +761,7 @@ function subscribeAll(once){
   for(const c of COLLS){
     DB.collection(c).onSnapshot(q=>{
       state[c]=q.docs.map(d=>({...d.data(),id:d.id}));
-      if(!q.metadata.fromCache){ once(c); subLoaded.add(c); if(c==='stops') maybeAutoTour(); }
+      if(!q.metadata.fromCache){ once(c); subLoaded.add(c); if(c==='stops') maybeAutoTour(); if(c==='checklist') maybeAutoTravelog(); }
       render();
     },e=>{ once(c); if(e&&e.code==='revoked') setSync('off','연결 끊김'); });
   }
@@ -866,7 +880,7 @@ function fbMembersCard(){
     <p class="muted" style="margin-bottom:0">승인된 사람은 일정·가계부·체크리스트를 고칠 수 있어요. 설정, 환율, 승인 관리는 관리자만 할 수 있어요.</p></div>`;
 }
 
-const APP_VER='2026.11.23-5';
+const APP_VER='2026.11.23-6';
 /* 공개 링크: 새 버전이 올라오면 자동으로 새로고침 (휴대폰 캐시 때문에 옛 화면이 보이는 문제 해결) */
 async function checkAppUpdate(){
   if(!(FB||VIEWER)||!/^https?:/.test(location.protocol)) return;
@@ -1915,6 +1929,39 @@ function updateMJ(){
    10. 탭: 가계부
    ========================================================= */
 const EXP_CATS=['식비','교통','숙소','쇼핑','관광','기타'];
+const PAY_METHODS=['트래블로그','엔화 현금','다른 카드','기타'];
+const TRAVELOG_PREP=[
+ ['서류·돈','트래블로그 카드 실물 챙기기 (하나은행 계좌 연결 확인)'],
+ ['서류·돈','하나머니 앱 로그인·엔화 충전 확인 + 자동충전 켜 두기'],
+ ['서류·돈','하나 트래블 미션 이번 달 ‘참여하기’ 누르기'],
+ ['서류·돈','Mastercard 일본 캐시백 행사 카드 등록 (하고 있으면)'],
+ ['서류·돈','세븐일레븐(세븐뱅크) ATM 위치 확인 · 그랑벨 호텔 근처'],
+ ['서류·돈','예비 결제수단 (다른 카드 1장 + 엔화 현금 조금)'],
+];
+function travelogHTML(){
+  const ul=a=>`<ul style="margin:6px 0 0;padding-left:20px">${a.map(x=>`<li style="margin-bottom:4px">${x}</li>`).join('')}</ul>`;
+  return `<div class="card"><details ${state.tlOpen?'open':''}><summary style="cursor:pointer;font-weight:800;font-size:16px">💳 하나 트래블로그로 여행할 때 알아둘 점</summary>
+  <div style="font-size:14px;line-height:1.7;margin-top:8px">
+  <b>기본 혜택</b>${ul(['엔화 무료 환전(환율 우대 100%), 해외 결제 수수료·ATM 인출 수수료 면제. 전월 실적 조건 없음',
+   '하나은행 계좌를 연결해 두면 은행 점검 시간에도 24시간 환전·결제·인출이 돼요'])}
+  <b>결제할 때</b>${ul(['카드 단말기나 영수증에 <b>원화(KRW)로 결제할지</b> 물으면 꼭 <b>엔화(JPY)</b>를 고르세요. 원화를 고르면 3~8% 정도 수수료가 더 붙어요',
+   '엔화 잔액이 모자라면 결제가 거절돼요 → 하나머니 앱에서 <b>자동충전</b>을 켜 두거나 하루 쓸 만큼 미리 충전',
+   '이 카드는 마스터카드라 일본 대부분 가게에서 돼요. 안 되는 곳을 대비해 다른 카드 1장과 엔화 현금을 조금 챙기기'])}
+  <b>현금 뽑을 때</b>${ul(['<b>세븐일레븐 안 세븐뱅크 ATM</b>에서 뽑으면 기기 수수료까지 0원 (마스터카드 제휴)',
+   '1회 최대 10만 엔, 1,000엔 단위. 통화 선택 화면에서 <b>JPY</b> 선택',
+   '그랑벨 호텔·삿포로역·공항 모두 세븐일레븐이 가까워요'])}
+  <b>면세 환급 받을 때 (11월부터 바뀐 방식)</b>${ul(['면세 등록할 때 매장이 <b>환급받을 카드</b>를 물으면 트래블로그를 등록할 수 있어요. 공항에서 세관 확인이 끝나야 환급이 진행되고, 들어오는 시점은 환급 업체마다 달라요',
+   '환급이 들어왔는지는 하나머니 앱 이용내역에서 확인. 미츠코시처럼 <b>본인 명의 신용카드</b>만 받는 곳도 있어서, 체크카드인 트래블로그가 되는지 면세 카운터에서 먼저 물어보기',
+   '영수증에 <b>Cash Japan</b>이 있으면 신치토세 국제선 3층에서 엔화 현금으로 받을 수도 있어요 → 받은 현금은 출국장 안에서 써 버리는 게 이득'])}
+  <b>남은 엔화</b>${ul(['외화하나머니에 남은 엔화를 원화로 바꾸면 <b>1% 수수료</b>가 있어요. 마지막 날은 공항에서 쓰거나 다음 일본 여행용으로 남겨 두기',
+   '충전은 한 번에 많이 하기보다 쓸 만큼씩 나눠서'])}
+  <b>놓치기 쉬운 혜택</b>${ul(['하나 트래블 미션은 <b>매달 ‘참여하기’</b>를 눌러야 적용돼요 (11월·12월 각각)',
+   'Mastercard 일본 캐시백 행사는 Mastercard 쪽에 카드를 따로 등록해야 해요. 대부분 일본 현지 매장에서 엔화로, 실물 카드로 결제한 건만 인정',
+   '돈키호테 쿠폰(쇼핑 탭 → 면세·할인 가이드)은 카드 종류와 상관없이 같이 쓸 수 있어요'])}
+  <div class="needwrite" style="margin-top:10px"><button class="btn sm" data-tl-prep>✅ 준비물에 트래블로그 체크 6개 담기</button></div>
+  <div class="muted" style="font-size:12px;margin-top:6px">출처: 하나카드 보도자료 기사(아시아경제·중앙이코노미뉴스), 트래블카드 비교 글, 한국 카드 일본 혜택 정리(2026년 11월). 혜택·행사는 바뀔 수 있으니 하나머니 앱에서 한 번 더 확인하세요.</div>
+  </div></details></div>`;
+}
 function settle(){
   const ms=members(); const bal={}; ms.forEach(m=>bal[m]=0);
   let total=0;
@@ -1945,11 +1992,18 @@ function viewMoney(){
   const paid={};ms.forEach(m=>paid[m]=0);state.expenses.forEach(e=>{if(paid[e.paidBy]!=null)paid[e.paidBy]+=toKRW(Number(e.amount)||0,e.cur,effRate(e))});
   const ed=state.editingExpense? state.expenses.find(e=>e.id===state.editingExpense):null;
   const maxCat=Math.max(1,...Object.values(byCat));
+  const jp=state.expenses.filter(e=>e.cur!=='KRW');
+  const tlJPY=jp.filter(e=>(e.pay||'트래블로그')==='트래블로그').reduce((a,e)=>a+(Number(e.amount)||0),0);
+  const cashJPY=jp.filter(e=>e.pay==='엔화 현금').reduce((a,e)=>a+(Number(e.amount)||0),0);
+  const taxJPY=jp.filter(e=>e.taxfree).reduce((a,e)=>a+(Number(e.amount)||0),0);
+  const refundJPY=Math.floor(taxJPY*10/110);
   return `
   <div class="card">
     <h2>여행 경비</h2>
     <div class="stats"><div class="stat"><b>${won(total)}</b><span>총 지출</span></div><div class="stat"><b>${yen(state.expenses.filter(e=>e.cur!=='KRW').reduce((a,e)=>a+(Number(e.amount)||0),0))}</b><span>엔화로 쓴 돈</span></div><div class="stat"><b>${won(total/ms.length)}</b><span>1인당</span></div></div>
     ${budget?`<div style="margin-top:12px"><div class="row" style="justify-content:space-between"><span class="muted">예산 ${won(budget)}</span><b style="color:${total>budget?'var(--accent)':'var(--ok)'}">${total>budget?'초과 '+won(total-budget):'남은 예산 '+won(budget-total)}</b></div><div class="bar" style="margin-top:4px"><i style="width:${Math.min(100,total/budget*100)}%;background:${total>budget?'var(--accent)':'var(--ok)'}"></i></div></div>`:''}
+    <div class="stats" style="margin-top:10px"><div class="stat"><b>${yen(tlJPY)}</b><span>💳 트래블로그</span></div><div class="stat"><b>${yen(cashJPY)}</b><span>💴 엔화 현금</span></div><div class="stat"><b style="color:var(--ok)">${yen(refundJPY)}</b><span>🧾 공항 환급 예정</span></div></div>
+    ${taxJPY?`<div class="muted" style="font-size:12px;margin-top:4px">면세 표시한 지출 ${yen(taxJPY)}의 소비세 10% 기준이에요 (경감세율 8% 품목은 조금 적게 나와요). 12/3 신치토세 공항에서 짐 부치기 전에 세관 확인!</div>`:''}
     <div class="muted" style="margin-top:8px">환율 100엔 = ${rate().toLocaleString()}원${state.fx.updatedAt?` · 관리자가 ${fmtAt(state.fx.updatedAt)}에 설정`:''}. 지출마다 입력할 때의 환율로 계산돼요.</div>
   </div>
   <div class="card needwrite">
@@ -1959,19 +2013,22 @@ function viewMoney(){
       <div class="field"><label>금액</label><div class="row"><input type="number" id="exAmt" class="grow" inputmode="decimal" placeholder="0" value="${ed?esc(ed.amount):''}"><select id="exCur" style="width:90px"><option value="JPY" ${!ed||ed.cur==='JPY'?'selected':''}>엔 ¥</option><option value="KRW" ${ed&&ed.cur==='KRW'?'selected':''}>원 ₩</option></select></div><div class="muted" id="exConv"></div>
         ${state.isOwner?`<div class="row" id="exRateRow" style="margin-top:6px;gap:6px"><span class="muted" style="white-space:nowrap">👑 이 지출 환율 100엔 =</span><input type="number" id="exRate" inputmode="decimal" style="width:100px" value="${ed&&ed.cur!=='KRW'?effRate(ed):rate()}"><span class="muted">원</span></div>`:''}</div>
       <div class="field"><label>분류</label><select id="exCat">${EXP_CATS.map(c=>`<option ${ed&&ed.cat===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>결제 수단</label><select id="exPay">${PAY_METHODS.map(c=>`<option ${(ed?(ed.pay||'트래블로그'):'트래블로그')===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>면세 환급</label><label class="row" style="gap:6px;font-size:14px"><input type="checkbox" id="exTax" ${ed&&ed.taxfree?'checked':''}> 면세 등록함 (공항에서 돌려받을 것)</label></div>
       <div class="field"><label>날짜</label><input type="date" id="exDate" value="${esc(ed?ed.date:(dayDate(state.day)||new Date().toISOString().slice(0,10)))}"></div>
       <div class="field"><label>결제한 사람</label><select id="exPaid">${ms.map(m=>`<option ${ed&&ed.paidBy===m?'selected':''}>${esc(m)}</option>`).join('')}</select></div>
       <div class="field"><label>나눌 사람</label><div class="row">${ms.map(m=>`<label class="row" style="gap:4px;font-size:14px"><input type="checkbox" class="exSplit" value="${esc(m)}" ${!ed||!ed.split||ed.split.includes(m)?'checked':''}>${esc(m)}</label>`).join('')}</div></div>
     </div>
     <div class="row"><button class="btn" data-ex-save>${ed?'수정 저장':'추가'}</button>${ed?'<button class="btn sec" data-ex-cancel>취소</button>':''}</div>
   </div>
+  ${travelogHTML()}
   ${ms.length>1?`<div class="card"><h2>정산</h2>
     <table><tr><th>이름</th><th class="r">낸 돈</th><th class="r">받을/줄 돈</th></tr>${ms.map(m=>`<tr><td>${esc(m)}</td><td class="r">${won(paid[m])}</td><td class="r" style="color:${bal[m]>=0?'var(--ok)':'var(--accent)'}">${bal[m]>=0?'+':''}${won(bal[m])}</td></tr>`).join('')}</table>
     <h3>이렇게 보내면 끝나요</h3>${tx.length?tx.map(t=>`<div class="check"><span class="t"><b>${esc(t.from)}</b> → <b>${esc(t.to)}</b></span><b>${won(t.amt)}</b></div>`).join(''):'<div class="muted">정산할 금액이 없어요 👍</div>'}
   </div>`:`<div class="card muted">설정에서 동행인 이름을 넣으면 누가 누구에게 얼마를 보내면 되는지 계산해 드려요.</div>`}
   <div class="card"><h2>분류별</h2>${EXP_CATS.map(c=>`<div style="margin-bottom:8px"><div class="row" style="justify-content:space-between;font-size:14px"><span>${c}</span><span>${won(byCat[c])}</span></div><div class="bar"><i style="width:${byCat[c]/maxCat*100}%"></i></div></div>`).join('')}</div>
   <div class="card"><h2>지출 내역 <span class="muted">${ex.length}건</span></h2>
-    ${ex.length?`<table><tr><th>날짜</th><th>내용</th><th class="r">금액</th><th></th></tr>${ex.map(e=>`<tr><td class="muted">${esc((e.date||'').slice(5))}</td><td>${esc(e.title)}<div class="muted">${esc(e.cat||'')} · ${esc(e.paidBy||'')} 결제${e.split&&e.split.length&&e.split.length<ms.length?' · '+e.split.map(esc).join(', '):''}</div></td><td class="r"><b>${e.cur==='KRW'?won(e.amount):yen(e.amount)}</b>${e.cur==='KRW'?'':`<div class="muted">${won(toKRW(e.amount,'JPY',effRate(e)))}<br>100엔=${effRate(e).toLocaleString()}원${(state.fx.exRates||{})[e.id]?' 👑':''}</div>${state.isOwner?`<button class="btn sec sm" style="margin-top:4px" data-ex-rate="${e.id}">환율 수정</button>`:''}`}</td><td class="r needwrite" style="white-space:nowrap"><button class="icon" data-ex-edit="${e.id}">✎</button><button class="icon" data-ex-del="${e.id}">🗑</button></td></tr>`).join('')}</table>`:'<div class="empty">아직 지출이 없어요.</div>'}
+    ${ex.length?`<table><tr><th>날짜</th><th>내용</th><th class="r">금액</th><th></th></tr>${ex.map(e=>`<tr><td class="muted">${esc((e.date||'').slice(5))}</td><td>${esc(e.title)}<div class="muted">${esc(e.cat||'')} · ${esc(e.paidBy||'')} 결제${e.pay&&e.pay!=='트래블로그'?' · '+esc(e.pay):e.cur!=='KRW'?' · 💳':''}${e.taxfree?' · 🧾면세':''}${e.split&&e.split.length&&e.split.length<ms.length?' · '+e.split.map(esc).join(', '):''}</div></td><td class="r"><b>${e.cur==='KRW'?won(e.amount):yen(e.amount)}</b>${e.cur==='KRW'?'':`<div class="muted">${won(toKRW(e.amount,'JPY',effRate(e)))}<br>100엔=${effRate(e).toLocaleString()}원${(state.fx.exRates||{})[e.id]?' 👑':''}</div>${state.isOwner?`<button class="btn sec sm" style="margin-top:4px" data-ex-rate="${e.id}">환율 수정</button>`:''}`}</td><td class="r needwrite" style="white-space:nowrap"><button class="icon" data-ex-edit="${e.id}">✎</button><button class="icon" data-ex-del="${e.id}">🗑</button></td></tr>`).join('')}</table>`:'<div class="empty">아직 지출이 없어요.</div>'}
   </div>`;
 }
 
@@ -1980,7 +2037,7 @@ function viewMoney(){
    ========================================================= */
 const CHECK_CATS=['서류·돈','예약','방한 의류','전자기기','세면·상비약','쇼핑','기타'];
 const DEFAULT_CHECK=[
- ['서류·돈','여권'],['서류·돈','항공권 e-티켓'],['서류·돈','숙소 예약 확인서'],['서류·돈','엔화 현금'],['서류·돈','해외결제 카드·트래블카드'],['서류·돈','Visit Japan Web 등록 (입국·세관 QR)'],['서류·돈','여행자 보험'],
+ ['서류·돈','여권'],['서류·돈','항공권 e-티켓'],['서류·돈','숙소 예약 확인서'],['서류·돈','엔화 현금'],['서류·돈','하나 트래블로그 카드 (엔화 충전·자동충전 확인)'],['서류·돈','Visit Japan Web 등록 (입국·세관 QR)'],['서류·돈','여행자 보험'],
  ['예약','항공권'],['예약','숙소'],['예약','공항 ↔ 시내 교통 (JR 쾌속 에어포트 지정석 등)'],['예약','근교 투어 (비에이·오타루 등)'],['예약','인기 식당 예약'],
  ['방한 의류','두꺼운 패딩'],['방한 의류','방수·미끄럼 방지 부츠'],['방한 의류','신발용 아이젠(스파이크)'],['방한 의류','장갑·목도리·모자'],['방한 의류','발열 내의'],['방한 의류','핫팩'],
  ['전자기기','휴대폰 충전기'],['전자기기','보조배터리 (기내 반입만 가능)'],['전자기기','돼지코 (일본 A타입 플러그)'],['전자기기','eSIM·포켓 와이파이'],
@@ -2105,6 +2162,12 @@ function viewShopGuide(){
       '카카오톡 여행 쿠폰 채널이나 LIVE JAPAN 쿠폰 모음에 쇼핑몰·전자제품점 쿠폰이 자주 올라와요. 가기 전에 한 번 검색하기.',
     ])}</div>`)}
 
+  ${sec('💳 트래블로그로 결제·환급할 때',ul([
+    '결제 화면에서 원화(KRW) 말고 <b>엔화(JPY)</b> 선택. 원화를 고르면 수수료가 더 붙어요',
+    '면세 등록 때 환급 카드로 트래블로그를 등록할 수 있어요. 미츠코시처럼 <b>본인 명의 신용카드</b>만 받는 곳은 체크카드가 되는지 먼저 확인',
+    '영수증에 Cash Japan이 있으면 공항 3층에서 엔화 현금 환급도 가능 → 출국장 안에서 쓰기',
+    '외화하나머니에 남은 엔화를 원화로 바꾸면 1% 수수료. 가계부 탭에 자세한 내용 있어요',
+  ]))}
   ${sec('⑤ 한국 들어올 때',ul([
     '한국 면세 한도는 <b>1인 800달러</b>예요. 둘이 산 걸 한 사람이 다 들고 오면 넘을 수 있으니 나눠 담기.',
     '생초콜릿·치즈케이크는 보냉백에 넣어 기내로. 액체 화장품은 100ml 넘으면 위탁 수하물로 보내요.',
@@ -2595,7 +2658,7 @@ document.addEventListener('click',async e=>{
     const id=state.editingExpense||uid();const old=state.expenses.find(x=>x.id===id);
     state.editingExpense=null;
     const cur=$('#exCur').value; const erEl=document.getElementById('exRate'); const ownRate=state.isOwner&&cur==='JPY'&&erEl?Number(erEl.value):0;
-    await writeDoc('expenses',id,{title,amount,cur,cat:$('#exCat').value,date:$('#exDate').value,paidBy:$('#exPaid').value,split,ts:old?old.ts:Date.now(),rate:cur==='KRW'?'':(old&&old.rate?old.rate:rate())});
+    await writeDoc('expenses',id,{title,amount,cur,cat:$('#exCat').value,date:$('#exDate').value,paidBy:$('#exPaid').value,split,pay:($('#exPay')||{}).value||'트래블로그',taxfree:!!($('#exTax')||{}).checked,ts:old?old.ts:Date.now(),rate:cur==='KRW'?'':(old&&old.rate?old.rate:rate())});
     if(state.isOwner&&cur==='JPY'&&ownRate>=300&&ownRate<=3000&&ownRate!==effRate({...(old||{}),id,rate:old&&old.rate?old.rate:rate()})) await saveExRate(id,ownRate);
     renderFresh=true;render();return toast('저장했어요');
   }
@@ -2629,6 +2692,7 @@ document.addEventListener('click',async e=>{
   if(d.mjFilter){state.mjFilter=d.mjFilter;return render()}
   if(d.mjPick){const c=MJ_CLINICS.find(x=>x.id===d.mjPick);if(c){const b=mjBook();b.clinic=c.name;if(c.url)b.url=c.url;saveLS('mjBook',b);state.mjView='book';renderFresh=true;render();window.scrollTo({top:0,behavior:'smooth'});toast(c.name+'을(를) 예약 정보에 담았어요')}return}
   if(d.lmapFull!==undefined){const w=t.closest('.lmap-wrap');if(w)toggleFullMap(w);return}
+  if(d.tlPrep!==undefined){if(state.readOnly)return toast('보기 전용이에요');const have=new Set(state.checklist.map(i=>i.text));let o=Date.now(),n=0;for(const [cat,t] of TRAVELOG_PREP){if(have.has(t))continue;await writeDoc('checklist',uid(),{cat,text:t,done:false,who:'',order:o++});n++}state.tlOpen=true;return toast(n?`준비물에 ${n}개 담았어요`:'이미 다 담겨 있어요')}
   if(d.shopView){state.shopView=d.shopView;renderFresh=true;return render()}
   if(d.shopPrep!==undefined){if(state.readOnly)return toast('보기 전용이에요');const have=new Set(state.checklist.map(i=>i.text));let o=Date.now(),n=0;for(const t of SHOP_PREP){if(have.has(t))continue;await writeDoc('checklist',uid(),{cat:'쇼핑',text:t,done:false,who:'',order:o++});n++}return toast(n?`준비물 쇼핑 목록에 ${n}개 담았어요`:'이미 다 담겨 있어요')}
   if(d.shopCat){state.shopCat=d.shopCat;renderFresh=true;return render()}
