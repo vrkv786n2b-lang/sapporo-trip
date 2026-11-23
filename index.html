@@ -854,7 +854,7 @@ function fbMembersCard(){
     <p class="muted" style="margin-bottom:0">승인된 사람은 일정·가계부·체크리스트를 고칠 수 있어요. 설정, 환율, 승인 관리는 관리자만 할 수 있어요.</p></div>`;
 }
 
-const APP_VER='2026.11.23-2';
+const APP_VER='2026.11.23-3';
 /* 공개 링크: 새 버전이 올라오면 자동으로 새로고침 (휴대폰 캐시 때문에 옛 화면이 보이는 문제 해결) */
 async function checkAppUpdate(){
   if(!(FB||VIEWER)||!/^https?:/.test(location.protocol)) return;
@@ -1164,11 +1164,11 @@ function mapSVG(pts,segModes){
   const X=lng=>W/2+(MX(lng)-cx)*sc, Y=lat=>H/2+(MY(lat)-cy)*sc;
   const w=(maxLng-minLng)*cl,h=maxLat-minLat;
   const span=Math.max(w,h,0.03);
-  // 실제 지도 타일 (CARTO Voyager, OpenStreetMap 데이터)
-  const z=Math.max(3,Math.min(18,Math.floor(Math.log2(sc/256)))),n=2**z,ts=sc/n;
+  // 실제 지도 타일 (OpenStreetMap, 실패하면 일본 국토지리원 지도)
+  const z=Math.max(3,Math.min(18,Math.floor(Math.log2(sc/256))+1)),n=2**z,ts=sc/n;
   const tx0=Math.floor((cx-W/2/sc)*n),tx1=Math.floor((cx+W/2/sc)*n),ty0=Math.max(0,Math.floor((cy-H/2/sc)*n)),ty1=Math.min(n-1,Math.floor((cy+H/2/sc)*n));
   let tiles='';
-  for(let tx=tx0;tx<=tx1;tx++)for(let ty=ty0;ty<=ty1;ty++){const sub='abcd'[(tx+ty)&3];tiles+=`<image href="https://${sub}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${((tx%n)+n)%n}/${ty}@2x.png" x="${(W/2+(tx/n-cx)*sc).toFixed(1)}" y="${(H/2+(ty/n-cy)*sc).toFixed(1)}" width="${(ts+.6).toFixed(1)}" height="${(ts+.6).toFixed(1)}" preserveAspectRatio="none" onerror="this.remove()"/>`}
+  for(let tx=tx0;tx<=tx1;tx++)for(let ty=ty0;ty<=ty1;ty++){const xx=((tx%n)+n)%n;tiles+=`<image href="https://tile.openstreetmap.org/${z}/${xx}/${ty}.png" data-g="https://cyberjapandata.gsi.go.jp/xyz/std/${z}/${xx}/${ty}.png" x="${(W/2+(tx/n-cx)*sc).toFixed(1)}" y="${(H/2+(ty/n-cy)*sc).toFixed(1)}" width="${(ts+.6).toFixed(1)}" height="${(ts+.6).toFixed(1)}" preserveAspectRatio="none" onerror="if(this.dataset.g&&!this.dataset.f){this.dataset.f=1;this.setAttribute('href',this.dataset.g)}else this.remove()"/>`}
   const poly=arr=>arr.map(([la,ln])=>`${X(ln).toFixed(1)},${Y(la).toFixed(1)}`).join(' ');
   // 1) 바다·육지
   let base=`<rect width="${W}" height="${H}" fill="#d6e6f5"/><polygon points="${poly(HOKKAIDO)}" fill="#f3f5ef" stroke="#c4cfbb" stroke-width="1.5"/>`;
@@ -1199,7 +1199,7 @@ function mapSVG(pts,segModes){
   const bar=target/kmPerPx;
   return `<svg class="map" viewBox="0 0 ${W} ${H}" role="img" aria-label="동선 지도">
     <g>${base}${ctxSvg}</g>${tiles}${g}${pins}
-    <text x="${W-6}" y="${H-6}" text-anchor="end" font-size="9" fill="#5f6b82" paint-order="stroke" stroke="#fff" stroke-width="3">© OpenStreetMap · © CARTO</text>
+    <text x="${W-6}" y="${H-6}" text-anchor="end" font-size="9" fill="#5f6b82" paint-order="stroke" stroke="#fff" stroke-width="3">© OpenStreetMap contributors</text>
     <g transform="translate(14,${H-16})"><rect x="-6" y="-12" width="${bar+56}" height="22" rx="6" fill="#fff" opacity=".8"/><line x1="0" y1="0" x2="${bar}" y2="0" stroke="#5f6b82" stroke-width="2"/><line x1="0" y1="-4" x2="0" y2="4" stroke="#5f6b82"/><line x1="${bar}" y1="-4" x2="${bar}" y2="4" stroke="#5f6b82"/><text x="${bar+6}" y="4" font-size="11" fill="#5f6b82">${target<1?target*1000+'m':target+'km'}</text></g>
     <text x="${W-12}" y="18" text-anchor="end" font-size="11" font-weight="700" fill="#5f6b82" paint-order="stroke" stroke="#fff" stroke-width="3">N ↑</text>
   </svg>
@@ -1904,38 +1904,47 @@ const DEFAULT_CHECK=[
    쇼핑 핫템 탭
    ========================================================= */
 const SHOP_CATS=[
- ['hk','🍫 홋카이도 과자'],['air','✈️ 공항 한정'],['drug','💊 드럭스토어'],['cos','💄 화장품'],['donki','🛒 돈키·편의점'],['goods','🧸 잡화']];
-// [id, cat, 한국어 이름, 일본어 이름, 대략 가격, 어디서(pid 또는 글), 왜 핫한지, hot]
+ ['sns','📸 요즘 SNS 화제'],['winter','❄️ 이번 겨울 한정'],['air','✈️ 공항 한정'],['cos','💄 돈키 코스메 2026'],['drug','💊 드럭스토어'],['goods','🧸 잡화'],['classic','🏆 그래도 스테디']];
+// [id, cat, 한국어 이름, 일본어 이름, 가격, 어디서(pid 또는 글), 왜, hot, 배지]
 const SHOP_ITEMS=[
- ['shiroi-k','hk','시로이 코이비토','白い恋人','','shiroi','홋카이도 대표 과자. 공장 견학하는 시로이 코이비토 파크에서 사면 한정 캔도 있어요',1],
- ['marusei','hk','마루세이 버터샌드','マルセイバターサンド','','rokkatei','롯카테이 시그니처. 하스카프(블루베리 비슷한 열매) 맛은 홋카이도에서만',1],
- ['royce','hk','로이즈 생초콜릿·포테이토칩 초콜릿','ROYCE\' 生チョコレート','','royce-airport','생초콜릿은 보냉백 필수. 공항점이 종류가 제일 많아요',1],
- ['jagapokkuru','hk','자가포쿠루','じゃがポックル','','airport','가루비의 홋카이도 한정 감자 스낵. 공항에서 품절 잘 나요',1],
- ['kitakaro-b','hk','키타카로 바움쿠헨·슈크림','北菓楼 妖精の森','','kitakaro','본관 한정 메뉴가 있고 슈크림은 그 자리에서 먹기',0],
- ['letao-df','hk','르타오 더블 프로마주·로얄 몽타뉴','ルタオ ドゥーブルフロマージュ','','letao','오타루 치즈케이크. 냉동이라 마지막 날 공항점에서 사는 게 편해요',1],
- ['yamawasabi','hk','갓파 에비센 야마와사비맛','かっぱえびせん 山わさび味','','donki','홋카이도 한정 맛. 싸고 가벼워서 돌리기 좋은 선물',0],
- ['milkcloud','hk','미루쿠노쿠모','ミルクの雲','','','홋카이도 기념품 어워드 노스 웨이브 셀렉션 2026–27 과자 부문 대상. 입에서 녹는 구름 과자',1],
- ['dashipotato','hk','다시 포테이토','だしポテト','','','같은 어워드 준대상. 육수맛 감자 큐브, 유통기한 270일이라 들고 오기 편해요',0],
- ['snowdome','air','SNOWDOME · 홋카이도 브라운 치즈','GOOD NEWS SNOWDOME','','airport','신치토세 공항 기념품 인기 순위 상위. 브라운 치즈 디저트로 SNS에서 유명',1],
- ['namacaramel','air','하나바타케 목장 생캐러멜','花畑牧場 生キャラメル','','airport','공항 국내선 터미널 2층 매장',0],
- ['milktruffle','air','로이즈 우유 트뤼플','ロイズ 牛乳トリュフ','','royce-airport','신치토세 공항 한정 상품 순위에 오른 로이즈 제품',0],
- ['glico-cb','air','글리코 캐러멜 비스킷 버터','CARAMEL KITCHEN','','airport','공항 안 CARAMEL KITCHEN 매장 한정',0],
- ['bake-brick','air','BAKE 버터샌드 홋카이도 벽돌','バターサンド','','airport','공항 ANA FESTA 로비점 등에서 판매',0],
- ['chitane','air','스노우 치즈 치타네','スノーチーズ チーたね','약 680엔','airport','치즈 과자. 공항에서 사기 좋아요',0],
- ['arinamin','drug','아리나민 EX 플러스','アリナミンEXプラス','약 5,400엔(대용량)','donki','어깨·눈 피로 영양제. 부모님 선물 1순위',1],
- ['pabron','drug','파브론 골드 A','パブロンゴールドA','약 1,900엔','donki','일본 국민 종합감기약',0],
- ['eve','drug','이브 A정 (진통제)','イブA錠','','donki','두통·생리통 진통제. 드럭스토어마다 가격 차이가 있으니 비교해 보세요',0],
- ['roihi','drug','로이히 츠보코 동전파스','ロイヒつぼ膏','','donki','붙이는 동전 모양 온열 파스',0],
- ['kyusoku','drug','휴족시간','休足時間','','donki','많이 걸은 날 밤 다리에 붙이는 쿨링 시트',0],
- ['nivea-lip','cos','니베아 복숭아 립','ニベア リップ ピーチ','약 400엔','donki','가볍고 싸서 여러 개 사기 좋아요',0],
- ['honey','cos','&honey 헤어오일','&honey ヘアオイル','약 1,400엔','donki','꿀 성분 헤어오일. 인스타 하울 단골',1],
- ['fino','cos','피노 헤어마스크','フィーノ ヘアマスク','약 700~800엔','donki','가성비 헤어팩의 정석',1],
- ['bioreuv','cos','비오레 UV 아쿠아리치 / 스킨아쿠아','ビオレUV アクアリッチ','','donki','가벼운 일본 선크림. 한국보다 싸게 사는 대표템',0],
- ['handcream','cos','야사시이 데즈쿠리 미니 핸드크림 4종','やさしい手づくり ミニ4種','','','노스 웨이브 셀렉션 2026–27 굿즈 부문 대상. 시라오이산 카렌듈라, 작아서 나눠 주기 좋아요',0],
- ['kororo','donki','코로로 젤리','コロロ','','donki','과즙 젤리. 편의점·돈키 어디서나',0],
- ['sapporo-classic','donki','삿포로 클래식 맥주','サッポロクラシック','','donki','홋카이도에서만 파는 맥주',1],
- ['shimaenaga','goods','시마에나가 굿즈','シマエナガ グッズ','','airport','홋카이도에 사는 하얀 뱁새. 인형·키링이 인기',1],
- ['melonkuma','goods','멜론곰 굿즈','メロン熊','','airport','유바리 멜론 + 곰 캐릭터',0],
+ ['bluepond','sns','블루폰드 캐러멜 프로마주','BLUE POND キャラメルフロマージュ','2개 1,404엔','daimaru','투명한 파란 젤리 돔 케이크. ‘너무 예쁘다’며 SNS에 퍼진 다이마루 삿포로 한정 브랜드 (2025년 10월 오픈). 캐러멜 크리스피도 인기',1,'다이마루 한정'],
+ ['royce-hk','sns','로이즈 ‘北海道’ 글씨 초콜릿','ロイズ「北海道」チョコ','약 1,600엔(SNS 언급)','royce-airport','2026년 11월 X(트위터)에서 ‘새 홋카이도 기념품 정석’이라며 화제가 된 신상. 신치토세 공항 로이즈에 있어요',1,'11월 화제'],
+ ['aoka','sns','aoka 캐러멜 초콜릿 샌드','aoka キャラメルチョコレートサンド','4개 1,641엔','airport','‘줄 서야 사는’ 홋카이도발 샌드. 2026년 7월부터 공항 JAL PLAZA에서도 팔아요',1,'2026 입점'],
+ ['namanorthman','sns','생노스맨','札幌千秋庵 生ノースマン','','airport','옛날 팥 파이 ‘노스맨’을 생크림으로 리뉴얼한 행렬 과자. 2026년에 사과 버전 ‘생노스맨 링고’도 나왔어요',1,''],
+ ['dai2cheese','sns','삿포로 농학교 제2농장 치즈케이크','第2農場チーズケーキ','','airport','2026년 10월 공항 선행 발매 신상. 홋카이도 크림치즈 43%, 상온 보관이라 들고 오기 편해요',0,'10월 신상'],
+ ['chelsea-om','sns','첼시 × 스낫플스 생식감 첼시 오믈렛','北海道生食感チェルシーオムレット','','airport','추억의 첼시 캔디 맛 오믈렛 케이크. 2026년 7월 나온 기간 한정 홋카이도 기념품',0,'기간 한정'],
+ ['chelsea-melon','sns','첼시 멜론 스카치맛','チェルシー メロンスカッチ味','','airport','단종됐던 첼시가 홋카이도 한정으로 부활. 공항 기념품 연구소 추천템',0,'홋카이도 한정'],
+ ['kuma-monaka','sns','곰 모나카','熊モナカ','','airport','목각 곰 발상지 야쿠모 마을의 수상 스위츠. 곰 모양이라 사진 찍기 좋아요',0,''],
+ ['snows','winter','SNOWS 스노우 샌드·스노우볼','SNOWS スノーサンド・スノーボール','','airport','11/1~4/30 겨울에만 파는 인기 브랜드. 공항 4개 매장에서 파는데 오후엔 종류가 금방 빠져요 → 아침에 가기. 올해 스노우볼 새 맛도 나왔어요',1,'겨울 한정'],
+ ['namachoco-cookie','winter','생초코 쿠키 하스카프×딸기','生チョコクッキー ハスカップ×ストロベリー','','airport','ANA FESTA 한정 새 맛. 12월 1일(화) 발매라 우리 출국일(12/3)에 딱 살 수 있어요',1,'12/1 발매'],
+ ['northman-choco','winter','생노스맨 초콜릿','生ノースマン チョコレート','','airport','겨울 한정 맛. 공항에서는 줄 안 서고 살 수 있다는 후기가 많아요',0,'겨울 한정'],
+ ['visitandine','winter','로이즈 비지탄딘 겨울 맛','ロイズ ヴィジタンディーヌ 冬限定','','royce-airport','메이플·홍차·사과 조합 구움과자. 공항 로이즈 베이커리 겨울 한정',0,'겨울 한정'],
+ ['pressbutter','air','PRESS BUTTER SAND 홋카이도 연유 옥수수','PRESS BUTTER SAND 北海道れん乳とうきび','','airport','ANA FESTA 신치토세 기념품 랭킹 1위',1,'공항 랭킹 1위'],
+ ['maaaru','air','르타오 마아루 쇼콜라 블랑','ルタオ まあある ショコラブラン','','airport','같은 랭킹 2위. 동글동글한 화이트 초콜릿 과자',0,''],
+ ['snaffles-shu','air','스낫플스 레어치즈 슈','スナッフルス レアチーズシュー','','airport','ANA FESTA 한정 랭킹 3위. 냉장이라 공항에서 사서 바로 기내로',0,'ANA FESTA 한정'],
+ ['symphonie','air','르타오 상포니 프로마주','ルタオ サンフォニーフロマージュ','','airport','공항점에서 13시부터 수량 한정. 시간 맞으면 꼭',0,'13시 한정'],
+ ['bieicorn','air','비에이 콘빵','びえいのコーンぱん','','airport','옥수수가 꽉 찬 빵. 비에이 투어 다녀온 기념으로 딱',0,''],
+ ['milkcloud','air','미루쿠노쿠모','ミルクの雲','','airport','홋카이도 기념품 어워드 2026–27 과자 부문 대상. 입에서 녹는 우유 구름 과자',0,'2026 수상'],
+ ['anua','cos','Anua PDRN 히알루론산 100 세럼','Anua PDRN ヒアルロン酸100セラム','','donki','돈키 코스메 어워드 2026AW 트렌드 1위. 상반기에만 약 8만 7천 개 팔렸어요',1,'돈키 1위'],
+ ['meme','cos','로토 메메 마이 샤인 드롭','ロートme+me マイシャインドロップ','','donki','렌즈 낄 때 쓰는 물광 눈동자 안약. 돈키 한정, 어워드 ‘가치오시’ 1위. 하트 병이 귀여워요',1,'돈키 한정'],
+ ['kome-pack','cos','케아나나데시코 쌀 팩','毛穴撫子 お米のパック','','donki','돈키 외국인 관광객 인기 1위 (인바운드 히트상)',1,'관광객 1위'],
+ ['fino-p','cos','피노 프리미엄 터치 헤어마스크','フィーノ プレミアムタッチ 濃厚美容液ヘアマスク','약 700~800엔','donki','돈키 코스메 종합 1위, 명예의 전당. 이건 지금도 현역',0,'종합 1위'],
+ ['clay','cos','비오레 오우치de에스테 딥 클레이 세안','ビオレ おうちdeエステ ディープクレイ洗顔','','donki','요즘 SNS에서 모공 세안제로 화제',0,''],
+ ['romand-don','cos','롬앤 G컬러 글로스 돈펜 에디션','rom&nd Gカラーグロス ドンペンエディション','','donki','돈키 마스코트 콜라보 한정 (10/7~). 일본 돈키에서만',0,'돈키 한정'],
+ ['strawberry-pdrn','cos','STEP by rom&nd 딸기 PDRN','STEP by rom&nd いちごPDRN','','donki','2026년 10월 23일 출시된 돈키 선행 스킨케어',0,'10월 신상'],
+ ['skinaqua-don','cos','스킨아쿠아 톤업 UV 화이트 (돈키 한정 향)','スキンアクア トーンアップUV ホワイトリリー＆ジャスミン','','donki','인기 톤업 선크림에 돈키 한정 화이트릴리·자스민 향',0,'돈키 한정'],
+ ['cica100','cos','코스퍼레이드 CICA 마스크 100매','コスパレード CICA&ヒアルロン酸マスク100枚','','donki','돈키 PB 마스크 1위. 대용량이라 가족이랑 나눠 쓰기 좋아요',0,''],
+ ['arinamin','drug','아리나민 EX 플러스','アリナミンEXプラス','약 5,400엔(대용량)','donki','어깨·눈 피로 영양제. 부모님 선물 단골',0,''],
+ ['pabron','drug','파브론 골드 A','パブロンゴールドA','약 1,900엔','donki','일본 국민 감기약',0,''],
+ ['eve','drug','이브 A정','イブA錠','','donki','두통·생리통 진통제',0,''],
+ ['kyusoku','drug','휴족시간','休足時間','','donki','많이 걸은 날 밤 다리에 붙이는 쿨링 시트',0,''],
+ ['shimaenaga','goods','시마에나가 굿즈','シマエナガ グッズ','','airport','홋카이도의 하얀 뱁새. 인형·키링이 여전히 인기',0,''],
+ ['shinchan','goods','크레용 신짱 공항 한정 굿즈','クレヨンしんちゃん 新千歳空港限定','','airport','2026년 8월 공항 연결시설로 옮겨 다시 연 매장. 공항 한정 상품이 계속 나와요',0,''],
+ ['shiroi-k','classic','시로이 코이비토','白い恋人','','shiroi','홋카이도 대표 과자. 무난하게 돌리기 좋은 선물',0,''],
+ ['marusei','classic','마루세이 버터샌드','マルセイバターサンド','','rokkatei','롯카테이 대표 과자',0,''],
+ ['royce','classic','로이즈 생초콜릿','ROYCE\' 生チョコレート','','royce-airport','보냉백 필수',0,''],
+ ['jagapokkuru','classic','자가포쿠루','じゃがポックル','','airport','공항에서 자주 품절되는 감자 스낵',0,''],
+ ['sapporo-classic','classic','삿포로 클래식 맥주','サッポロクラシック','','donki','홋카이도에서만 파는 맥주',0,''],
 ];
 const SHOP_STORES=['donki','tanuki','daimaru','stellar','rokkatei','kitakaro','shiroi','letao','royce-airport','airport'];
 function shopWhere(w){const p=w&&PLACES.find(x=>x.id===w);return p?p.name:(w||'기념품점·공항')}
@@ -2030,14 +2039,14 @@ function viewShopItems(){
   const label=it=>`${it[2]} (${it[3]})`;
   return `
   <div class="card">
-    <h2>🛍 삿포로 쇼핑 핫템</h2>
-    <p class="muted" style="margin:4px 0 10px">블로그·여행 매거진·공항 공식 순위에 자주 나온 것들을 모았어요. 가격은 대략이고 매장마다 달라요. <b>담기</b>를 누르면 준비물 탭 ‘쇼핑’ 목록에 들어가요.</p>
+    <h2>🛍 2026 겨울 삿포로 쇼핑 핫템</h2>
+    <p class="muted" style="margin:4px 0 10px">2026년 하반기 SNS 화제템, 겨울 한정·공항 신상, 돈키 코스메 어워드 2026AW 수상작 위주로 새로 짰어요. 시로이 코이비토 같은 스테디셀러는 맨 아래로 내렸어요. 가격은 대략이고 매장마다 달라요. <b>담기</b>를 누르면 준비물 탭 ‘쇼핑’ 목록에 들어가요.</p>
     <div class="warn" style="margin:0">💡 11월부터 면세가 <b>공항 환급식</b>으로 바뀌었어요. 신치토세 공항 절차, 돈키호테 쿠폰, 백화점 5% 할인은 위 <b>💸 면세·할인 가이드</b>에 정리했어요.</div>
   </div>
   ${chips}
   <div class="card">
     ${list.map(it=>{const has=inList.has(label(it));return `<div class="stop" style="align-items:flex-start">
-      <div class="body"><div class="name">${it[7]?'🔥 ':''}${esc(it[2])} <span class="muted" style="font-weight:400;font-size:12px">${esc(it[3])}</span></div>
+      <div class="body"><div class="name">${it[7]?'🔥 ':''}${esc(it[2])}${it[8]?` <span class="tag" style="background:#fff0f2;color:#d7263d">${esc(it[8])}</span>`:''} <span class="muted" style="font-weight:400;font-size:12px">${esc(it[3])}</span></div>
       <div class="sub">${it[4]?`<b>${esc(it[4])}</b> · `:''}📍 ${esc(shopWhere(it[5]))}</div>
       <div class="sub" style="margin-top:2px">${esc(it[6])}</div></div>
       <div class="acts needwrite"><button class="btn sm ${has?'sec':''}" data-shop-add="${it[0]}" ${has?'disabled':''}>${has?'담음':'담기'}</button></div></div>`}).join('')}
@@ -2047,7 +2056,7 @@ function viewShopItems(){
     <div class="row needwrite" style="margin-bottom:8px"><span class="muted">넣을 날</span><select id="shopDay" style="width:auto">${Array.from({length:dayCount()},(_,i)=>`<option value="${i+1}" ${state.day===i+1?'selected':''}>${esc(dayLabel(i+1))}</option>`).join('')}</select></div>
     ${SHOP_STORES.map(id=>PLACES.find(p=>p.id===id)).filter(Boolean).map(p=>`<div class="stop"><div class="body"><div class="name">${esc(p.name)}</div>${p.h?`<div class="sub">${esc(p.h)}</div>`:''}</div><div class="acts needwrite"><button class="btn sm sec" data-shop-place="${p.id}">일정에 +</button></div></div>`).join('')}
   </div>
-  <p class="muted" style="font-size:12px;padding:0 6px">출처: 신치토세 공항 공식 ‘홋카이도 한정 기념품’ 칼럼, LIVE JAPAN 노스 웨이브 셀렉션 2026–27 기사, 국내 여행 블로그·매거진 쇼핑 리스트</p>`;
+  <p class="muted" style="font-size:12px;padding:0 6px">출처: 돈키 코스메 히트 어워드 2026AW(마이나비 뉴스), ANA FESTA 신치토세 공지·랭킹, 홋카이도 지역 매체(moula), X(트위터) 화제 글 모음(Togetter), 신치토세 공항 공식 칼럼. 인스타그램은 로그인 없이 볼 수 없어서, 인스타 게시물을 인용한 기사와 SNS 화제 정리 글을 참고했어요. 한정·신상은 품절되거나 바뀔 수 있어요.</p>`;
 }
 
 function viewCheck(){
